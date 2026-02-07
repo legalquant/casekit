@@ -143,3 +143,14 @@ pub fn remove_document_metadata(case_name: String, document_id: String) -> Resul
     save_documents_index(&case_name, &filtered)?;
     Ok(filtered)
 }
+
+/// Extract text from any file path (for drag-and-drop / file picker on Citation Audit).
+/// Uses the same extraction engine as document upload (PDF, DOCX, EML, TXT, images).
+#[tauri::command]
+pub fn extract_text_from_path(path: String) -> Result<ExtractedContent, String> {
+    let file_path = std::path::PathBuf::from(&path);
+    if !file_path.exists() {
+        return Err(format!("File not found: {}", path));
+    }
+    crate::extraction::extract_from_file(&file_path)
+}

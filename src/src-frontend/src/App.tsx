@@ -27,6 +27,9 @@ import AiReviewPanel from './components/ai/AiReviewPanel';
 // Export
 import BundleExport from './components/export/BundleExport';
 
+// Legal Research
+import CitationAudit from './components/research/CitationAudit';
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -55,6 +58,9 @@ export default function App() {
           {/* AI tools */}
           <Route path="/api-setup" element={<ApiKeySetup />} />
           <Route path="/ai-review" element={<AiReviewPanel />} />
+
+          {/* Legal Research */}
+          <Route path="/citation-audit" element={<CitationAudit />} />
 
           {/* Export */}
           <Route path="/export" element={<BundleExport />} />

@@ -1,5 +1,6 @@
 pub mod ai_history;
 pub mod case;
+pub mod citation;
 pub mod chronology;
 pub mod documents;
 pub mod export;

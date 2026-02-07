@@ -22,6 +22,10 @@ const NAV_SECTIONS_CASE = [
     { to: '/export', label: 'Export Bundle' },
 ];
 
+const NAV_SECTIONS_RESEARCH = [
+    { to: '/citation-audit', label: 'Citation Audit' },
+];
+
 const NAV_SECTIONS_AI = [
     { to: '/your-data', label: 'Your Data & AI' },
     { to: '/api-setup', label: 'API Key Setup' },
@@ -162,6 +166,20 @@ export default function Sidebar() {
                             key={item.to}
                             to={item.to}
                             end={item.to === '/cases'}
+                            style={({ isActive }) => linkStyle(isActive)}
+                        >
+                            {item.label}
+                        </NavLink>
+                    ))}
+                </div>
+
+                {/* Legal Research section */}
+                <div style={{ marginBottom: '4px' }}>
+                    {sectionHeader('Legal Research')}
+                    {NAV_SECTIONS_RESEARCH.map((item) => (
+                        <NavLink
+                            key={item.to}
+                            to={item.to}
                             style={({ isActive }) => linkStyle(isActive)}
                         >
                             {item.label}
