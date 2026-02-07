@@ -27,7 +27,10 @@ export interface CaseMetadata {
     insolvency: boolean;
     regulatory_overlap: boolean;
     counterclaim: boolean;
+    user_role: UserRole;
 }
+
+export type UserRole = 'claimant' | 'defendant';
 
 export type CaseStatus =
     | 'intake'

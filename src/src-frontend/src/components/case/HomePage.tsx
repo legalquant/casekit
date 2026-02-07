@@ -1,15 +1,20 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import type { UserRole } from '../../types/case';
+import { useNavigate, Link } from 'react-router-dom';
 import { useCaseStore } from '../../hooks/useCase';
 
 export default function HomePage() {
     const { cases, loadCases, selectCase, loading, error } = useCaseStore();
+    const deleteCase = useCaseStore((s) => s.deleteCase);
     const navigate = useNavigate();
     const [showNewCase, setShowNewCase] = useState(false);
     const [newCaseName, setNewCaseName] = useState('');
     const [claimantName, setClaimantName] = useState('');
     const [defendantName, setDefendantName] = useState('');
+    const [newRole, setNewRole] = useState<UserRole>('claimant');
     const [createError, setCreateError] = useState<string | null>(null);
+    const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+    const [deleteInput, setDeleteInput] = useState('');
 
     useEffect(() => {
         loadCases();
@@ -25,7 +30,8 @@ export default function HomePage() {
             await useCaseStore.getState().createNewCase(
                 newCaseName.trim(),
                 claimantName.trim(),
-                defendantName.trim()
+                defendantName.trim(),
+                newRole
             );
             navigate('/case/overview');
         } catch (e) {
@@ -67,6 +73,28 @@ export default function HomePage() {
                         </button>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {/* Role selector */}
+                            <div>
+                                <label className="label">You are the…</label>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <button
+                                        type="button"
+                                        className={`btn ${newRole === 'claimant' ? 'btn-primary' : 'btn-secondary'}`}
+                                        onClick={() => setNewRole('claimant')}
+                                        style={{ flex: 1 }}
+                                    >
+                                        Claimant
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`btn ${newRole === 'defendant' ? 'btn-primary' : 'btn-secondary'}`}
+                                        onClick={() => setNewRole('defendant')}
+                                        style={{ flex: 1 }}
+                                    >
+                                        Defendant
+                                    </button>
+                                </div>
+                            </div>
                             <div>
                                 <label className="label">Case Name</label>
                                 <input
@@ -78,20 +106,20 @@ export default function HomePage() {
                                 />
                             </div>
                             <div>
-                                <label className="label">Your Name (Claimant)</label>
+                                <label className="label">{newRole === 'claimant' ? 'Your Name (Claimant)' : 'Claimant Name'}</label>
                                 <input
                                     className="input"
-                                    placeholder="Your name"
+                                    placeholder={newRole === 'claimant' ? 'Your name' : 'Claimant name'}
                                     value={claimantName}
                                     onChange={(e) => setClaimantName(e.target.value)}
                                     aria-label="Claimant name"
                                 />
                             </div>
                             <div>
-                                <label className="label">Defendant's Name</label>
+                                <label className="label">{newRole === 'defendant' ? 'Your Name (Defendant)' : "Defendant's Name"}</label>
                                 <input
                                     className="input"
-                                    placeholder="Company or individual name"
+                                    placeholder={newRole === 'defendant' ? 'Your name or company' : 'Company or individual name'}
                                     value={defendantName}
                                     onChange={(e) => setDefendantName(e.target.value)}
                                     aria-label="Defendant name"
@@ -128,34 +156,53 @@ export default function HomePage() {
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             {cases.map((c) => (
-                                <button
-                                    key={c.id}
-                                    onClick={() => handleOpenCase(c.name)}
-                                    style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        padding: '0.75rem',
-                                        border: '1px solid var(--color-border)',
-                                        borderRadius: '0.375rem',
-                                        background: 'white',
-                                        cursor: 'pointer',
-                                        transition: 'border-color 0.15s',
-                                        textAlign: 'left',
-                                        width: '100%',
-                                    }}
-                                    aria-label={`Open case ${c.name}`}
-                                >
-                                    <div>
-                                        <p style={{ fontWeight: 500, fontSize: '0.875rem' }}>{c.name}</p>
-                                        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>
-                                            {c.claimant_name} v {c.defendant_name}
-                                        </p>
-                                    </div>
-                                    <span className="badge badge-grey" style={{ textTransform: 'capitalize' }}>
-                                        {c.status.replace('_', ' ')}
-                                    </span>
-                                </button>
+                                <div key={c.id} style={{ display: 'flex', gap: '0.25rem', alignItems: 'stretch' }}>
+                                    <button
+                                        onClick={() => handleOpenCase(c.name)}
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            padding: '0.75rem',
+                                            border: '1px solid var(--color-border)',
+                                            borderRadius: '0.375rem 0 0 0.375rem',
+                                            background: 'white',
+                                            cursor: 'pointer',
+                                            transition: 'border-color 0.15s',
+                                            textAlign: 'left',
+                                            flex: 1,
+                                        }}
+                                        aria-label={`Open case ${c.name}`}
+                                    >
+                                        <div>
+                                            <p style={{ fontWeight: 500, fontSize: '0.875rem' }}>{c.name}</p>
+                                            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>
+                                                {c.claimant_name} v {c.defendant_name}
+                                            </p>
+                                        </div>
+                                        <span className="badge badge-grey" style={{ textTransform: 'capitalize' }}>
+                                            {c.status.replace('_', ' ')}
+                                        </span>
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setConfirmDelete(c.name); setDeleteInput(''); }}
+                                        title={`Delete case ${c.name}`}
+                                        aria-label={`Delete case ${c.name}`}
+                                        style={{
+                                            background: 'transparent',
+                                            border: '1px solid var(--color-border)',
+                                            borderLeft: 'none',
+                                            borderRadius: '0 0.375rem 0.375rem 0',
+                                            cursor: 'pointer',
+                                            color: 'var(--color-text-muted)',
+                                            padding: '0 0.5rem',
+                                            fontSize: '0.8rem',
+                                            transition: 'color 0.15s, background 0.15s',
+                                        }}
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
                             ))}
                         </div>
                     )}
@@ -183,11 +230,60 @@ export default function HomePage() {
                     <div>
                         <p style={{ fontWeight: 500, fontSize: '0.85rem' }}>🤖 AI Analysis</p>
                         <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                            Get structured merits analysis using your own API key
+                            Get structured merits analysis using your own <Link to="/api-setup" style={{ fontWeight: 500 }}>API key</Link>
                         </p>
                     </div>
                 </div>
             </div>
+
+            {/* Delete confirmation dialog */}
+            {confirmDelete && (
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    background: 'rgba(0,0,0,0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000,
+                }}
+                    onClick={() => setConfirmDelete(null)}
+                >
+                    <div className="card" style={{ maxWidth: 400, width: '90%', padding: '1.5rem' }} onClick={(e) => e.stopPropagation()}>
+                        <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--color-critical)' }}>
+                            Delete case?
+                        </h3>
+                        <p style={{ fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+                            This will permanently delete <strong>{confirmDelete}</strong> and all its documents.
+                            This cannot be undone.
+                        </p>
+                        <label className="label" style={{ fontSize: '0.8rem' }}>Type the case name to confirm:</label>
+                        <input
+                            className="input"
+                            value={deleteInput}
+                            onChange={(e) => setDeleteInput(e.target.value)}
+                            placeholder={confirmDelete}
+                            aria-label="Confirm case name for deletion"
+                        />
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                            <button
+                                className="btn btn-danger"
+                                disabled={deleteInput !== confirmDelete || loading}
+                                onClick={async () => {
+                                    await deleteCase(confirmDelete);
+                                    setConfirmDelete(null);
+                                    setDeleteInput('');
+                                }}
+                            >
+                                {loading ? 'Deleting...' : 'Delete Permanently'}
+                            </button>
+                            <button className="btn btn-secondary" onClick={() => setConfirmDelete(null)}>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

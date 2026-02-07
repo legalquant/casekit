@@ -213,6 +213,23 @@ a:hover {
   border-color: #cbd5e1;
 }
 
+.btn-danger {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.btn-danger:disabled {
+  background: #fca5a5;
+  border-color: #fca5a5;
+  cursor: not-allowed;
+}
+
 .btn-ghost {
   background: transparent;
   color: var(--text-muted);

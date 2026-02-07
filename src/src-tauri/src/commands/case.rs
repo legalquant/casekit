@@ -17,7 +17,7 @@ fn get_case_path(case_name: &str) -> Result<PathBuf, String> {
 }
 
 #[tauri::command]
-pub fn create_case(name: String, claimant_name: String, defendant_name: String) -> Result<CaseMetadata, String> {
+pub fn create_case(name: String, claimant_name: String, defendant_name: String, user_role: String) -> Result<CaseMetadata, String> {
     let case_dir = get_case_path(&name)?;
 
     if case_dir.exists() {
@@ -35,6 +35,10 @@ pub fn create_case(name: String, claimant_name: String, defendant_name: String) 
     metadata.name = name;
     metadata.claimant_name = claimant_name;
     metadata.defendant_name = defendant_name;
+    metadata.user_role = match user_role.as_str() {
+        "defendant" => crate::models::case::UserRole::Defendant,
+        _ => crate::models::case::UserRole::Claimant,
+    };
 
     // Write case.json
     let case_json = serde_json::to_string_pretty(&metadata)
@@ -125,4 +129,24 @@ pub fn update_case(case_name: String, metadata: CaseMetadata) -> Result<CaseMeta
         .map_err(|e| format!("Could not write case.json: {}", e))?;
 
     Ok(updated)
+}
+
+#[tauri::command]
+pub fn delete_case(case_name: String) -> Result<(), String> {
+    let case_path = get_case_path(&case_name)?;
+
+    if !case_path.exists() {
+        return Err(format!("Case '{}' not found", case_name));
+    }
+
+    // Verify it's actually a CaseKit case directory
+    let case_file = case_path.join(".casekit").join("case.json");
+    if !case_file.exists() {
+        return Err("This does not appear to be a valid CaseKit case directory".to_string());
+    }
+
+    fs::remove_dir_all(&case_path)
+        .map_err(|e| format!("Could not delete case '{}': {}", case_name, e))?;
+
+    Ok(())
 }

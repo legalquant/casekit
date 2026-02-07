@@ -16,7 +16,7 @@ interface CaseStore {
     // Actions
     loadCases: () => Promise<void>;
     selectCase: (caseName: string) => Promise<void>;
-    createNewCase: (name: string, claimantName: string, defendantName: string) => Promise<CaseMetadata>;
+    createNewCase: (name: string, claimantName: string, defendantName: string, userRole: string) => Promise<CaseMetadata>;
     updateCurrentCase: (metadata: CaseMetadata) => Promise<void>;
     clearCurrentCase: () => void;
     setError: (error: string | null) => void;
@@ -30,6 +30,10 @@ interface CaseStore {
     loadChronology: () => Promise<void>;
     addChronologyEntry: (entry: ChronologyEntry) => Promise<void>;
     removeChronologyEntry: (entryId: string) => Promise<void>;
+    scanDocumentsForDates: () => Promise<ChronologyEntry[]>;
+
+    // Case management
+    deleteCase: (caseName: string) => Promise<void>;
 }
 
 export const useCaseStore = create<CaseStore>((set, get) => ({
@@ -64,10 +68,10 @@ export const useCaseStore = create<CaseStore>((set, get) => ({
         }
     },
 
-    createNewCase: async (name: string, claimantName: string, defendantName: string) => {
+    createNewCase: async (name: string, claimantName: string, defendantName: string, userRole: string) => {
         try {
             set({ loading: true, error: null });
-            const newCase = await commands.createCase(name, claimantName, defendantName);
+            const newCase = await commands.createCase(name, claimantName, defendantName, userRole);
             set({ currentCase: newCase, loading: false });
             await get().loadCases();
             return newCase;
@@ -101,12 +105,13 @@ export const useCaseStore = create<CaseStore>((set, get) => ({
         const currentCase = get().currentCase;
         if (!currentCase) return;
         try {
-            // Documents are stored in documents.json, loaded by the backend
-            // For now, we read it via the load_case flow — documents.json is external
-            // We'll add a dedicated command later; for now use what we have
-            set({ documents: [] }); // Placeholder
+            // Load documents from documents.json via invoke
+            const { invoke } = await import('@tauri-apps/api/core');
+            const docs: DocumentEntry[] = await invoke('load_documents_index', { caseName: currentCase.name });
+            set({ documents: docs });
         } catch (e) {
-            set({ error: String(e) });
+            // If the command doesn't exist yet, try listing files
+            set({ documents: [] });
         }
     },
 
@@ -162,6 +167,33 @@ export const useCaseStore = create<CaseStore>((set, get) => ({
             set({ chronology: updated });
         } catch (e) {
             set({ error: String(e) });
+        }
+    },
+
+    scanDocumentsForDates: async () => {
+        const currentCase = get().currentCase;
+        if (!currentCase) return [];
+        try {
+            return await commands.scanDocumentsForDates(currentCase.name);
+        } catch (e) {
+            set({ error: String(e) });
+            return [];
+        }
+    },
+
+    deleteCase: async (caseName: string) => {
+        try {
+            set({ loading: true, error: null });
+            await commands.deleteCase(caseName);
+            // Clear current case if it was the deleted one
+            if (get().currentCase?.name === caseName) {
+                set({ currentCase: null, documents: [], chronology: [] });
+            }
+            // Reload case list
+            await get().loadCases();
+            set({ loading: false });
+        } catch (e) {
+            set({ error: String(e), loading: false });
         }
     },
 }));

@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 export default function TechnicalOverview() {
     return (
         <div className="page" style={{ maxWidth: '48rem' }}>
@@ -98,7 +100,21 @@ export default function TechnicalOverview() {
                     <li>AI prompts are structured (not freeform chat) to produce reliable, reviewable outputs</li>
                     <li>The AI provider (Anthropic) processes your request under their own privacy policy — CaseKit has no visibility into this</li>
                     <li>Your API key is stored in browser local storage only — it is never written to a file or transmitted to any server other than Anthropic's</li>
-                    <li>You can remove your API key at any time from the API Key Setup page</li>
+                    <li>You can remove your API key at any time from the <Link to="/api-setup" style={{ fontWeight: 500 }}>API Key Setup</Link> page</li>
+                </ul>
+            </div>
+
+            <div className="info-block" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '0.5rem', padding: '1rem 1.25rem' }}>
+                <h3 style={{ color: '#166534' }}>Verify it yourself</h3>
+                <p style={{ fontSize: '0.875rem', marginBottom: 'var(--space-2)' }}>
+                    CaseKit makes <strong>zero network requests</strong> unless you explicitly use AI features.
+                    You don't have to take our word for it — you can verify:
+                </p>
+                <ul>
+                    <li>Open <strong>Task Manager</strong> (Ctrl+Shift+Esc) → click the <strong>Network</strong> column to sort by usage</li>
+                    <li>CaseKit will show <strong>0 Mbps</strong> network activity during normal use</li>
+                    <li>Only when you press "Analyse" on an AI feature will you see a brief data transfer to <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85em', background: 'var(--bg)', padding: '1px 4px', borderRadius: '3px' }}>api.anthropic.com</code></li>
+                    <li>There is no background connectivity, no update checker, no telemetry endpoint</li>
                 </ul>
             </div>
 

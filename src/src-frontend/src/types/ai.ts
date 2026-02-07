@@ -11,6 +11,7 @@ export interface ChronologyEntry {
 
 export interface AssembledContext {
     caseType: 'cra_goods' | 'cra_services';
+    userRole: 'claimant' | 'defendant';
     parties: {
         claimant: { name: string };
         defendant: { name: string; type: 'individual' | 'company' | 'sole_trader' };
@@ -28,13 +29,29 @@ export interface AssembledContext {
         callType: string;
         summary: string;
     }[];
+    /** Drafting instructions — only for pre-action letter, defence, and particulars */
+    instructions?: DraftingInstructions;
 }
 
 export type AiCallType =
     | 'merits_assessment'
     | 'pre_action_letter'
     | 'response_review'
-    | 'particulars_draft';
+    | 'particulars_draft'
+    | 'response_to_letter'
+    | 'defence_draft';
+
+export interface DraftingInstructions {
+    remedySought: string;
+    deadline: string;
+    keyPoints: string;
+    tone: 'formal' | 'firm' | 'conciliatory';
+    priorOffers: string;
+    additionalContext: string;
+    /** Particulars / Defence only */
+    exactAmount?: string;
+    interestClaimed?: boolean;
+}
 
 export interface AiCallRecord {
     id: string;
@@ -48,14 +65,25 @@ export interface AiCallRecord {
 }
 
 export interface ParsedMeritsResponse {
-    claimSummary: string;
-    legalBasis: string[];
-    meritsRating: 'strong' | 'arguable' | 'weak' | 'no_claim';
-    meritsReasoning: string;
-    evidenceGaps: string[];
-    opponentArguments: string;
-    quantumEstimate: { low: number; high: number; basis: string };
-    risks: string[];
-    options: { option: string; tradeOff: string }[];
-    uncertaintyFlags: string[];
+    factualSummary: string;
+    documentReferences: { document: string; relevance: string }[];
+    legalFramework: { provision: string; application: string }[];
+    claimantPosition: {
+        potentialCausesOfAction: string[];
+        strengthsOfPosition: string[];
+        weaknesses: string[];
+    };
+    defendantPosition: {
+        potentialDefences: string[];
+        strengthsOfPosition: string[];
+        weaknesses: string[];
+    };
+    limitationPeriod: {
+        applicablePeriod: string;
+        expiryEstimate: string;
+        notes: string;
+    };
+    quantumAnalysis: { low: number; high: number; basis: string };
+    proceduralConsiderations: string[];
+    keyUncertainties: string[];
 }

@@ -1,13 +1,22 @@
 use crate::path_safety::{safe_case_path, sanitise_path_component, validate_relative_path};
 use crate::models::document::DocumentEntry;
+use crate::extraction::ExtractedContent;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
+
+/// Result from copying a file to a case — includes extracted text
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CopyResult {
+    pub relative_path: String,
+    pub extracted: Option<ExtractedContent>,
+}
 
 fn get_case_path(case_name: &str) -> Result<PathBuf, String> {
     safe_case_path(case_name)
 }
 
-fn load_documents_index(case_name: &str) -> Result<Vec<DocumentEntry>, String> {
+fn load_docs_index(case_name: &str) -> Result<Vec<DocumentEntry>, String> {
     let case_path = get_case_path(case_name)?;
     let index_path = case_path.join(".casekit").join("documents.json");
 
@@ -20,6 +29,11 @@ fn load_documents_index(case_name: &str) -> Result<Vec<DocumentEntry>, String> {
     let docs: Vec<DocumentEntry> = serde_json::from_str(&content)
         .map_err(|e| format!("Could not parse documents.json: {}", e))?;
     Ok(docs)
+}
+
+#[tauri::command]
+pub fn load_documents_index(case_name: String) -> Result<Vec<DocumentEntry>, String> {
+    load_docs_index(&case_name)
 }
 
 fn save_documents_index(case_name: &str, docs: &[DocumentEntry]) -> Result<(), String> {
@@ -39,7 +53,7 @@ pub fn copy_file_to_case(
     source_path: String,
     folder: String,
     filename: String,
-) -> Result<String, String> {
+) -> Result<CopyResult, String> {
     let case_path = get_case_path(&case_name)?;
 
     // Sanitise the filename to prevent path traversal
@@ -63,7 +77,14 @@ pub fn copy_file_to_case(
         .map_err(|e| format!("Could not copy file to {}: {}", dest_path.display(), e))?;
 
     let relative_path = format!("{}/{}", folder_name, safe_filename);
-    Ok(relative_path)
+
+    // Auto-extract text from the copied file
+    let extracted = crate::extraction::extract_from_file(&dest_path).ok();
+
+    Ok(CopyResult {
+        relative_path,
+        extracted,
+    })
 }
 
 #[tauri::command]
@@ -109,7 +130,7 @@ pub fn read_file_text(case_name: String, relative_path: String) -> Result<String
 
 #[tauri::command]
 pub fn add_document_metadata(case_name: String, document: DocumentEntry) -> Result<Vec<DocumentEntry>, String> {
-    let mut docs = load_documents_index(&case_name)?;
+    let mut docs = load_docs_index(&case_name)?;
     docs.push(document);
     save_documents_index(&case_name, &docs)?;
     Ok(docs)
@@ -117,7 +138,7 @@ pub fn add_document_metadata(case_name: String, document: DocumentEntry) -> Resu
 
 #[tauri::command]
 pub fn remove_document_metadata(case_name: String, document_id: String) -> Result<Vec<DocumentEntry>, String> {
-    let docs = load_documents_index(&case_name)?;
+    let docs = load_docs_index(&case_name)?;
     let filtered: Vec<DocumentEntry> = docs.into_iter().filter(|d| d.id != document_id).collect();
     save_documents_index(&case_name, &filtered)?;
     Ok(filtered)

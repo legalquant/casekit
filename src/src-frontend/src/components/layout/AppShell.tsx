@@ -1,11 +1,14 @@
 import { Outlet, Link } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import SetupCheck from '../common/SetupCheck';
 
 export default function AppShell() {
     return (
         <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
             <Sidebar />
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                {/* First-run dependency check */}
+                <SetupCheck />
                 {/* Disclaimer banner */}
                 <div className="disclaimer-banner" role="status" aria-label="Legal disclaimer">
                     CaseKit is a self-help organisational tool, not a legal advice service.{' '}

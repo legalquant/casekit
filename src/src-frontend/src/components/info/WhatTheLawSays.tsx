@@ -85,7 +85,7 @@ export default function WhatTheLawSays() {
                     View the Step-by-Step Guide
                 </Link>
                 <Link to="/templates" className="btn btn-secondary">
-                    Browse Letter Templates
+                    Browse Templates & Forms
                 </Link>
             </div>
         </div>

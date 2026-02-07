@@ -16,9 +16,10 @@ export async function ensureBaseDirectory(): Promise<string> {
 export async function createCase(
     name: string,
     claimantName: string,
-    defendantName: string
+    defendantName: string,
+    userRole: string
 ): Promise<CaseMetadata> {
-    return invoke('create_case', { name, claimantName, defendantName });
+    return invoke('create_case', { name, claimantName, defendantName, userRole });
 }
 
 export async function listCases(): Promise<CaseMetadata[]> {
@@ -99,4 +100,36 @@ export async function exportBundle(
     exportPath: string
 ): Promise<string> {
     return invoke('export_bundle', { caseName, documentPaths, exportPath });
+}
+
+// Chronology scanning
+export async function scanDocumentsForDates(
+    caseName: string
+): Promise<ChronologyEntry[]> {
+    return invoke('scan_documents_for_dates', { caseName });
+}
+
+// Case deletion
+export async function deleteCase(caseName: string): Promise<void> {
+    return invoke('delete_case', { caseName });
+}
+
+// AI History
+export interface AiHistoryRecord {
+    id: string;
+    callType: string;
+    timestamp: string;
+    inputTokens: number;
+    outputTokens: number;
+    model: string;
+    response: string;
+    summary?: string;
+}
+
+export async function saveAiCall(caseName: string, record: AiHistoryRecord): Promise<void> {
+    return invoke('save_ai_call', { caseName, record });
+}
+
+export async function loadAiHistory(caseName: string): Promise<AiHistoryRecord[]> {
+    return invoke('load_ai_history', { caseName });
 }

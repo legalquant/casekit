@@ -1,243 +1,539 @@
 import { useState } from 'react';
+import { useCaseStore } from '../../hooks/useCase';
+import type { UserRole } from '../../types/case';
+import DeadlineCalculator from './DeadlineCalculator';
 
-interface RoadmapStep {
-    number: number;
+/* ─── Types ─── */
+interface StepNode {
+    id: string;
     title: string;
+    timeline: string;
+    cprBasis: string;
     description: string;
-    reference: string;
+    claimantAction: string;
+    defendantAction: string;
+    tips: string;
+    claimantTip?: string;
+    defendantTip?: string;
     form?: string;
     formUrl?: string;
-    estimatedTimeline: string;
-    tips: string;
+    defendantForm?: string;
+    defendantFormUrl?: string;
+    phase: Phase;
+    decision?: { question: string; resolved: boolean; nextId?: string };
 }
 
-const STEPS: RoadmapStep[] = [
+type Phase = 'pre-action' | 'issuing' | 'management' | 'hearing';
+
+const PHASE_CONFIG: Record<Phase, { colour: string; bg: string; label: string; icon: string }> = {
+    'pre-action': { colour: '#3b82f6', bg: '#eff6ff', label: 'Pre-Action', icon: '📋' },
+    'issuing': { colour: '#8b5cf6', bg: '#f5f3ff', label: 'Issuing & Responding', icon: '📄' },
+    'management': { colour: '#f59e0b', bg: '#fffbeb', label: 'Case Management', icon: '⚖️' },
+    'hearing': { colour: '#10b981', bg: '#ecfdf5', label: 'Hearing & Resolution', icon: '🏛️' },
+};
+
+/* ─── Step Data — CPR-verified timescales ─── */
+const STEPS: StepNode[] = [
+    /* ── Phase 1: Pre-Action ── */
     {
-        number: 1,
-        title: 'Understand your position',
-        description: 'Identify the basis of your claim or dispute. Gather the key facts: what happened, when, who was involved, and what outcome you want. Consider whether any specific legislation applies to your situation.',
-        reference: 'Limitation Act 1980 (general limitation periods)',
-        estimatedTimeline: 'Immediate',
-        tips: 'Write a clear, factual summary of what happened before taking any other steps. This will form the foundation for every document you produce later. Check that your claim is within the limitation period — typically 6 years for contract and tort claims, 3 years for personal injury.',
+        id: '1a', phase: 'pre-action',
+        title: 'Assess the position',
+        timeline: 'As early as possible',
+        cprBasis: 'Limitation Act 1980, ss.2, 5',
+        description: 'Both parties should identify the factual basis of the dispute, the outcome they seek, and any applicable limitation periods.',
+        claimantAction: 'Identify the legal basis of the claim — what duty was owed and how it was breached. Check limitation: 6 years for contract/tort, 3 years for personal injury (from knowledge of injury).',
+        defendantAction: 'Assess the complaint received and identify the factual basis for any defence. Consider whether there is a basis for a counterclaim.',
+        tips: 'Write a clear factual summary before taking any other step. This helps identify gaps in evidence early.',
+        claimantTip: 'Use CaseKit\'s AI analysis to check your case strength objectively before investing time and money.',
+        defendantTip: 'Even if liability seems clear, assess contributory negligence, limitation, and quantum — all can reduce exposure.',
     },
     {
-        number: 2,
-        title: 'Gather your evidence',
-        description: 'Collect all relevant documents — contracts, correspondence, invoices, photographs, receipts, and any other records that support your position. Organise them chronologically.',
-        reference: 'CPR r.31.6 (standard disclosure)',
-        estimatedTimeline: '1–2 weeks',
-        tips: 'Use CaseKit\'s document management to upload and tag everything. Build your chronology early — it helps you spot gaps in your evidence and identify what you still need. Save emails as PDFs (see How to Save Emails).',
+        id: '1b', phase: 'pre-action',
+        title: 'Gather evidence',
+        timeline: '1–2 weeks',
+        cprBasis: 'CPR PD Pre-Action Conduct, paras 6–7',
+        description: 'Collect all relevant documents — contracts, correspondence, invoices, photographs, receipts. Organise chronologically.',
+        claimantAction: 'Assemble documents supporting the claim. Identify key documents the defendant is likely to hold.',
+        defendantAction: 'Preserve all relevant documents. Do not destroy anything that may be relevant to the dispute.',
+        tips: 'Upload documents to CaseKit early and build a chronology — it reveals gaps and strengthens preparation.',
     },
     {
-        number: 3,
-        title: 'Try to resolve it directly',
-        description: 'Write to the other party setting out what happened, why you believe they are responsible, and what you want them to do. Give a reasonable deadline (usually 14 days) for a response.',
-        reference: 'CPR PD Pre-Action Conduct, para 6',
-        estimatedTimeline: '14–28 days',
-        tips: 'Keep the tone factual and professional. State the outcome you want clearly. Send by email and keep a copy. This correspondence is important — the court will look at whether both parties tried to resolve things before issuing proceedings.',
+        id: '1c', phase: 'pre-action',
+        title: 'Attempt direct resolution',
+        timeline: '14 days (straightforward) to 3 months (complex)',
+        cprBasis: 'CPR PD Pre-Action Conduct, paras 6–16',
+        description: 'The claimant writes to the defendant setting out the complaint. The defendant should respond substantively within a reasonable period.',
+        claimantAction: 'Send a clear, factual letter setting out what happened, why the defendant is responsible, and what remedy is sought. Give a deadline of at least 14 days.',
+        defendantAction: 'Respond substantively: accept, deny, or propose resolution. Ignoring pre-action correspondence may lead to costs penalties.',
+        tips: 'Keep the tone factual and professional. Both parties should disclose key documents at this stage.',
+        decision: { question: 'Has the dispute been resolved?', resolved: true },
     },
     {
-        number: 4,
-        title: 'Send a letter before claim',
-        description: 'If direct contact does not resolve the matter, send a formal pre-action letter. This gives the other party notice that you intend to issue court proceedings if the matter is not resolved.',
-        reference: 'CPR PD Pre-Action Conduct, paras 6–16',
-        form: 'Template in Templates section',
-        estimatedTimeline: '14 days for response',
-        tips: 'The court expects both parties to follow the Practice Direction on Pre-Action Conduct. Failing to send a letter before claim, or failing to respond to one, can result in costs penalties. Set a clear deadline (14 days is standard).',
+        id: '1d', phase: 'pre-action',
+        title: 'Letter Before Claim / Response',
+        timeline: '14 days for response (may be up to 3 months if complex)',
+        cprBasis: 'CPR PD Pre-Action Conduct, paras 6–16',
+        description: 'If informal resolution fails, the claimant sends a formal Letter Before Claim. The defendant responds with a Letter of Response.',
+        claimantAction: 'Send a formal letter before claim giving notice that court proceedings will follow if the matter is not resolved. Include a summary of facts, the legal basis, the remedy sought, and a deadline.',
+        defendantAction: 'Send a substantive Letter of Response. State clearly what is accepted, what is denied, and why. Propose ADR if appropriate.',
+        tips: 'The court expects compliance with pre-action protocols. Failure can result in costs sanctions even if the claim succeeds.',
+        form: 'Template in Templates & Forms', formUrl: '/templates',
+        decision: { question: 'Has the dispute been resolved?', resolved: true },
     },
     {
-        number: 5,
-        title: 'Consider alternative dispute resolution',
-        description: 'Before issuing a claim, consider whether mediation, an ombudsman scheme, or another form of ADR could resolve the dispute. The court expects parties to have considered this.',
-        reference: 'CPR r.1.4(2)(e); Churchill v Merthyr Tydfil CBC [2023] EWCA Civ 1416',
-        estimatedTimeline: '2–6 weeks',
-        tips: 'The court may penalise parties who unreasonably refuse to engage in ADR. Many sectors have ombudsman schemes (financial services, energy, telecoms, property). The Small Claims Mediation Service is free for claims allocated to the small claims track.',
+        id: '1e', phase: 'pre-action',
+        title: 'Consider ADR',
+        timeline: '4–8 weeks (mediation typically)',
+        cprBasis: 'CPR r.1.4(2)(e); Churchill v Merthyr Tydfil CBC [2023] EWCA Civ 1416',
+        description: 'Both parties should consider whether mediation, an ombudsman, or another form of ADR could resolve the dispute before court proceedings.',
+        claimantAction: 'Propose mediation or another appropriate ADR process. The Small Claims Mediation Service is free for qualifying claims.',
+        defendantAction: 'Consider and respond to any ADR proposal. An unreasonable refusal to mediate may result in costs sanctions.',
+        tips: 'Since Churchill v Merthyr Tydfil (2023), courts can compel parties to attempt ADR. Unreasonable refusal carries real costs risk.',
+        decision: { question: 'Has the dispute been resolved?', resolved: true },
     },
+
+    /* ── Phase 2: Issuing & Responding ── */
     {
-        number: 6,
-        title: 'Decide whether to proceed',
-        description: 'Assess the strength of your case, the likely costs, and whether the other party can pay. Consider whether professional advice would be worthwhile at this stage.',
-        reference: 'CPR r.1.1 (overriding objective — proportionality)',
-        estimatedTimeline: '1–2 days',
-        tips: 'CaseKit\'s AI merits analysis can help you assess your position. Be realistic: consider the court fees, your time, the stress of proceedings, and whether a judgment would actually be enforceable. For complex or high-value claims, a solicitor consultation may save you money in the long run.',
-    },
-    {
-        number: 7,
+        id: '2a', phase: 'issuing',
         title: 'Issue the claim',
-        description: 'File your claim with the court. For most money claims, you can use Money Claims Online (MCOL) or submit Form N1. Pay the court fee.',
-        reference: 'CPR Part 7; CPR PD 7A',
-        form: 'N1',
-        formUrl: 'https://www.gov.uk/government/publications/form-n1-claim-form-cpr-part-7',
-        estimatedTimeline: '1–2 days to prepare',
-        tips: 'Court fees depend on claim value: up to £300 → £35; £300–500 → £50; £500–1,000 → £70; £1,000–1,500 → £80; £1,500–3,000 → £115; £3,000–5,000 → £205; £5,000–10,000 → £455. MCOL is usually cheaper and faster for straightforward money claims.',
+        timeline: 'Claim form valid for 4 months from issue for service',
+        cprBasis: 'CPR Part 7; r.7.5 (validity); PD 7A',
+        description: 'The claimant files a claim with the court using Form N1 (or Money Claims Online for straightforward money claims) and pays the court fee.',
+        claimantAction: 'Complete Form N1 or use MCOL. Pay the court fee (depends on claim value). The claim form must be served within 4 months of issue.',
+        defendantAction: 'No action required at this stage — the claim has not yet been received.',
+        tips: 'MCOL is usually cheaper and faster for straightforward money claims under £100,000.',
+        form: 'N1', formUrl: 'https://www.gov.uk/government/publications/form-n1-claim-form-cpr-part-7',
     },
     {
-        number: 8,
-        title: 'Service',
-        description: 'The court serves the claim on the defendant. Alternatively, you can serve the claim yourself and file a certificate of service.',
-        reference: 'CPR Part 6; CPR r.6.14 (deemed service)',
-        form: 'N215 (Certificate of Service)',
-        formUrl: 'https://www.gov.uk/government/publications/form-n215-certificate-of-service',
-        estimatedTimeline: '14 days from issue',
-        tips: 'The court usually serves by first class post. Service is deemed to have taken place on the second business day after posting. If serving yourself, keep proof of the method used.',
+        id: '2b', phase: 'issuing',
+        title: 'Service of the claim',
+        timeline: 'Deemed served on 2nd business day after posting',
+        cprBasis: 'CPR Part 6; r.6.14 (deemed service); r.7.5 (4-month validity)',
+        description: 'The court (or the claimant) serves the claim form and particulars of claim on the defendant. Service is deemed to take place on the second business day after the relevant step.',
+        claimantAction: 'If serving personally, file a Certificate of Service (Form N215). Check deemed service date carefully — all deadlines run from this date.',
+        defendantAction: 'Note the deemed date of service — this starts the clock for acknowledgment and defence deadlines.',
+        tips: 'Service by first class post is deemed on the second business day after posting. If posted on Friday, deemed served on Tuesday (assuming no bank holidays).',
+        form: 'N215', formUrl: 'https://www.gov.uk/government/publications/form-n215-certificate-of-service',
     },
     {
-        number: 9,
-        title: 'Defendant responds',
-        description: 'The defendant has 14 days to acknowledge service and then 28 days from service to file a defence. If they do not respond, you may apply for default judgment.',
-        reference: 'CPR r.10.3 (acknowledgment); r.15.4 (defence)',
-        form: 'N225/N227 (default judgment)',
-        formUrl: 'https://www.gov.uk/government/publications/form-n225-request-for-judgment-and-reply-to-admission-specified-amount',
-        estimatedTimeline: '14–28 days',
-        tips: 'If no defence is filed, apply for default judgment promptly. If a defence is filed, read it carefully and identify which facts are agreed and which are disputed — this narrows the issues for trial.',
+        id: '2c', phase: 'issuing',
+        title: 'Acknowledge service',
+        timeline: '14 days from deemed service of claim form',
+        cprBasis: 'CPR Part 10; r.10.3',
+        description: 'The defendant files an Acknowledgment of Service if they wish to contest the claim. This extends the defence deadline to 28 days.',
+        claimantAction: 'Monitor whether acknowledgment is filed. If neither acknowledgment nor defence is filed within 14 days, apply for default judgment.',
+        defendantAction: 'File Acknowledgment of Service within 14 days to gain additional time for the defence (extends to 28 days total from service).',
+        tips: 'Filing an acknowledgment is optional but highly advisable — it extends the defence deadline from 14 to 28 days from service.',
+        defendantForm: 'N9', defendantFormUrl: 'https://www.gov.uk/government/publications/form-n9-response-pack',
     },
     {
-        number: 10,
+        id: '2d', phase: 'issuing',
+        title: 'File the defence',
+        timeline: '14 days from service (or 28 days if acknowledged)',
+        cprBasis: 'CPR Part 15; r.15.4; r.15.5',
+        description: 'The defendant files a defence setting out their response to the claim. The parties may agree to extend by up to 28 further days without court permission.',
+        claimantAction: 'If no defence is filed in time, apply for default judgment promptly using Form N225 (specified amount) or N227 (unspecified).',
+        defendantAction: 'File a defence within the deadline. Set out which facts are admitted, denied, or not admitted. Include any counterclaim if appropriate.',
+        tips: 'Missing this deadline is critical. The claimant can apply for default judgment, which may be set aside but only with good reason and at cost.',
+        form: 'N225/N227', formUrl: 'https://www.gov.uk/government/publications/form-n225-request-for-judgment-and-reply-to-admission-specified-amount',
+        defendantForm: 'N11 (counterclaim)', defendantFormUrl: 'https://www.gov.uk/government/publications/form-n211-part-20-claim-form',
+        decision: { question: 'Has a defence been filed?', resolved: false, nextId: '3b' },
+    },
+
+    /* ── Phase 3: Case Management ── */
+    {
+        id: '3a', phase: 'management',
+        title: 'Directions questionnaire',
+        timeline: 'Return within 14 days of receipt',
+        cprBasis: 'CPR Part 26; r.26.3',
+        description: 'Both parties complete a Directions Questionnaire (N180 for small claims, N181 for other tracks). This helps the court allocate the case to the appropriate track.',
+        claimantAction: 'Complete and return the DQ by the date specified. Indicate willingness to use ADR. Identify witnesses and any expert evidence needed.',
+        defendantAction: 'Complete and return the DQ by the date specified. Indicate willingness to use ADR. Identify witnesses and any expert evidence needed.',
+        tips: 'Both parties answer the same questionnaire. Failure to return it can result in sanctions including strike-out.',
+        form: 'N180/N181', formUrl: 'https://www.gov.uk/government/publications/form-n181-directions-questionnaire-fast-track-and-multi-track',
+    },
+    {
+        id: '3b', phase: 'management',
         title: 'Allocation to track',
-        description: 'Both parties complete a directions questionnaire. The court allocates the claim to a track: small claims (up to £10,000), fast track (£10,000–£25,000), or multi-track (above £25,000).',
-        reference: 'CPR Part 26; r.26.6',
-        form: 'N149/N150 (Directions Questionnaire)',
-        formUrl: 'https://www.gov.uk/government/publications/form-n150-allocation-questionnaire',
-        estimatedTimeline: '2–4 weeks after defence',
-        tips: 'The track determines costs rules, procedure, and formality. Small claims track has very limited costs liability — you generally cannot recover legal fees even if you win, but equally you are not at risk of paying the other side\'s legal costs if you lose.',
+        timeline: '2–4 weeks after defence filed',
+        cprBasis: 'CPR r.26.6 (as amended October 2023)',
+        description: 'The court allocates the case to a track based on value, complexity, and likely trial length. Track thresholds (from October 2023): Small Claims (up to £10,000), Fast Track (£10,000–£25,000), Intermediate Track (£25,000–£100,000), Multi-Track (over £100,000 or exceptional complexity).',
+        claimantAction: 'Note the track allocation. Small claims = very limited costs recovery. Fast/intermediate track = fixed recoverable costs apply.',
+        defendantAction: 'Note the track allocation. On small claims track, costs risk is minimal. On other tracks, consider the costs implications.',
+        tips: 'The intermediate track (new from October 2023) applies fixed costs to claims £25,000–£100,000. Personal injury RTA claims have a lower small claims limit of £5,000.',
     },
     {
-        number: 11,
+        id: '3c', phase: 'management',
         title: 'Comply with directions',
-        description: 'The court issues directions — a timetable for exchanging documents, witness statements, and any expert evidence. Follow these strictly.',
-        reference: 'CPR r.27.4 (small claims); r.28.2 (fast track)',
-        estimatedTimeline: 'As ordered by the court',
-        tips: 'Missing a deadline can result in your evidence being excluded or your case being struck out. If you need more time, apply to the court before the deadline expires. Use CaseKit\'s bundle export to produce an organised evidence pack.',
+        timeline: 'As ordered by the court (typically 4–12 weeks)',
+        cprBasis: 'CPR r.27.4 (small claims); r.28.2 (fast track); r.28A (intermediate)',
+        description: 'The court issues directions — a timetable for disclosure, witness statements, and expert evidence. Both parties must comply strictly.',
+        claimantAction: 'Prepare and exchange documents, witness statements, and any expert evidence by each deadline. Apply for extensions before deadlines expire.',
+        defendantAction: 'Prepare and exchange documents, witness statements, and any expert evidence by each deadline. Apply for extensions before deadlines expire.',
+        tips: 'Missing a deadline can result in evidence being excluded or the case being struck out. Always apply for an extension before the deadline, not after.',
+    },
+
+    /* ── Phase 4: Hearing & Resolution ── */
+    {
+        id: '4a', phase: 'hearing',
+        title: 'Prepare the hearing bundle',
+        timeline: '3–7 days before hearing (as directed)',
+        cprBasis: 'CPR PD 27, para 2.3 (small claims); PD 28A (fast/intermediate)',
+        description: 'The bundle of documents for the hearing is prepared — paginated, indexed, and agreed between the parties where possible.',
+        claimantAction: 'Prepare the hearing bundle (unless the court directs otherwise). Include all relevant documents, paginate, and serve copies.',
+        defendantAction: 'Cooperate in agreeing the bundle contents. Ensure any documents you rely on are included.',
+        tips: 'Bring 3 copies to court (judge, witness, yourself). A clear, well-organised bundle makes a significant difference to the judge\'s impression.',
     },
     {
-        number: 12,
-        title: 'Prepare for the hearing',
-        description: 'Prepare your witness statement, organise your evidence bundle, and plan what you need to say. The bundle should be paginated and indexed.',
-        reference: 'CPR PD 27, para 2.3 (small claims)',
-        estimatedTimeline: '2–4 weeks before hearing',
-        tips: 'Bring 3 copies of your bundle: one for you, one for the judge, one for the other side. Practice summarising your case in 5 minutes. Focus on the facts and the remedy you are asking for. Small claims hearings are informal — the judge will guide you through the process.',
-    },
-    {
-        number: 13,
+        id: '4b', phase: 'hearing',
         title: 'The hearing',
-        description: 'Attend court at the scheduled time. Present your case, answer the judge\'s questions, and respond to the other party\'s arguments. The judge will give a decision, usually on the day.',
-        reference: 'CPR r.27.8 (small claims hearing)',
-        estimatedTimeline: 'As scheduled',
-        tips: 'Arrive early. Dress appropriately. Address the judge as "Sir" or "Madam". Speak clearly and factually. Do not interrupt the other party — you will have your chance to respond. If you disagree with a point, make a note and address it when it is your turn.',
+        timeline: 'Small claims: typically 15–60 minutes. Fast/intermediate: 1–3 days',
+        cprBasis: 'CPR r.27.8 (small claims hearing); Part 28 (fast track trial)',
+        description: 'Both parties attend court. Each presents their case, the judge may ask questions, and both respond to the other party\'s arguments.',
+        claimantAction: 'Present the claim clearly and concisely. Focus on the facts, the remedy sought, and evidence. Let the judge guide proceedings.',
+        defendantAction: 'Present the defence. Focus on the facts that support your position. Challenge specific points rather than general denials.',
+        tips: 'Arrive early. Address the judge as "Sir" or "Madam". Speak clearly and factually. Do not interrupt — both sides will have their opportunity.',
     },
     {
-        number: 14,
-        title: 'Judgment and enforcement',
-        description: 'The court gives judgment. If you win and the other party does not pay voluntarily, you may need to take enforcement action.',
-        reference: 'CPR Parts 70–73 (enforcement methods)',
-        estimatedTimeline: '14 days for payment, then enforcement',
-        tips: 'Enforcement options include: warrant of control (bailiffs), attachment of earnings, third party debt order, or charging order. Each has a court fee. Consider the debtor\'s ability to pay before choosing a method — a judgment is only worth something if it can be enforced.',
+        id: '4c', phase: 'hearing',
+        title: 'Judgment',
+        timeline: 'Usually given on the day (small claims) or reserved',
+        cprBasis: 'CPR Part 40',
+        description: 'The court gives judgment. In small claims, this is usually immediate. In fast track or above, judgment may be reserved and handed down later.',
+        claimantAction: 'If judgment is in your favour, note the terms carefully — amount, interest, costs. If not, consider the merits of an appeal (strict time limit: 21 days).',
+        defendantAction: 'If judgment is against you, note the deadline for payment (usually 14 days). Consider whether there are grounds for appeal (21-day time limit).',
+        tips: 'An appeal is not a re-hearing — it requires an error of law or serious procedural irregularity. Permission to appeal must be sought.',
+    },
+    {
+        id: '4d', phase: 'hearing',
+        title: 'Enforcement',
+        timeline: '14 days for voluntary payment, then enforcement steps',
+        cprBasis: 'CPR Parts 70–73',
+        description: 'If the judgment debtor does not pay voluntarily, the judgment creditor may use court enforcement methods.',
+        claimantAction: 'If payment is not received within 14 days, consider enforcement: warrant of control (bailiffs), attachment of earnings, third party debt order, or charging order.',
+        defendantAction: 'If unable to pay in full, apply to vary the judgment to pay by instalments. Respond promptly to any enforcement action.',
+        tips: 'Each enforcement method has a separate court fee. A warrant of control (county court bailiffs) is usually the quickest first step.',
     },
 ];
 
+/* ─── Component ─── */
 export default function ProceduralRoadmap() {
-    const [expandedStep, setExpandedStep] = useState<number | null>(null);
+    const currentCase = useCaseStore((s) => s.currentCase);
+    const userRole: UserRole = currentCase?.user_role || 'claimant';
+    const [expandedId, setExpandedId] = useState<string | null>(null);
+
+    let lastPhase: Phase | '' = '';
 
     return (
-        <div style={{ maxWidth: 800, margin: '0 auto' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '0.5rem' }}>
-                Step-by-Step Guide
+        <div style={{ maxWidth: 820, margin: '0 auto', padding: '0 1rem' }}>
+            {/* Header */}
+            <h1 style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '0.25rem' }}>
+                Procedural Outline
             </h1>
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
-                A general procedural guide for civil claims in England & Wales.
-                Each step includes the relevant legal reference, court forms, and practical guidance.
+            <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem', lineHeight: 1.5 }}>
+                Civil court procedure in England &amp; Wales — adapted to your role.
+            </p>
+            <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginBottom: '1rem', lineHeight: 1.4 }}>
+                CPR references and timescales correct as at February 2026. Verify current rules at{' '}
+                <a href="https://www.justice.gov.uk/courts/procedure-rules/civil" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8' }}>justice.gov.uk</a>.
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {STEPS.map((step) => (
-                    <div key={step.number} className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                        <button
-                            onClick={() => setExpandedStep(expandedStep === step.number ? null : step.number)}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '1rem',
-                                width: '100%',
-                                padding: '1rem',
-                                background: 'transparent',
-                                border: 'none',
-                                cursor: 'pointer',
-                                textAlign: 'left',
-                            }}
-                            aria-expanded={expandedStep === step.number}
-                            aria-label={`Step ${step.number}: ${step.title}`}
-                        >
-                            <span
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    width: 28,
-                                    height: 28,
-                                    borderRadius: '50%',
-                                    background: 'var(--color-primary)',
-                                    color: '#fff',
-                                    fontWeight: 600,
-                                    fontSize: '0.8rem',
-                                    flexShrink: 0,
-                                }}
-                            >
-                                {step.number}
-                            </span>
-                            <div style={{ flex: 1 }}>
-                                <p style={{ fontWeight: 600, fontSize: '0.9rem' }}>{step.title}</p>
-                                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{step.estimatedTimeline}</p>
-                            </div>
-                            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-                                {expandedStep === step.number ? '▼' : '▶'}
-                            </span>
-                        </button>
+            {/* Role indicator + Legend */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
+                marginBottom: '1.5rem',
+            }}>
+                <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.375rem 0.75rem',
+                    background: userRole === 'claimant' ? '#eff6ff' : '#fef3c7',
+                    border: `1px solid ${userRole === 'claimant' ? '#bfdbfe' : '#fcd34d'}`,
+                    borderRadius: '2rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: userRole === 'claimant' ? '#1e40af' : '#92400e',
+                }}>
+                    {userRole === 'claimant' ? '⚔️' : '🛡️'} Viewing as: {userRole === 'claimant' ? 'Claimant' : 'Defendant'}
+                </div>
 
-                        {expandedStep === step.number && (
-                            <div style={{ padding: '0 1rem 1rem', borderTop: '1px solid var(--color-border)' }}>
-                                <p style={{ fontSize: '0.85rem', marginTop: '0.75rem' }}>{step.description}</p>
-                                <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-                                    <p style={{ fontSize: '0.8rem' }}>
-                                        <strong>Reference:</strong>{' '}
-                                        <span style={{ color: 'var(--color-accent)' }}>{step.reference}</span>
-                                    </p>
-                                    {step.form && (
-                                        <p style={{ fontSize: '0.8rem' }}>
-                                            <strong>Form:</strong>{' '}
-                                            {step.formUrl ? (
-                                                <a href={step.formUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>
-                                                    {step.form}
-                                                </a>
-                                            ) : (
-                                                step.form
-                                            )}
-                                        </p>
-                                    )}
-                                    <div style={{ background: '#f7fafc', padding: '0.75rem', borderRadius: '0.25rem', marginTop: '0.25rem' }}>
-                                        <p style={{ fontSize: '0.8rem', fontWeight: 500, marginBottom: '0.25rem' }}>Practical tip</p>
-                                        <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{step.tips}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                ))}
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                    {Object.values(PHASE_CONFIG).map((p) => (
+                        <div key={p.label} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                            <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.colour, display: 'inline-block' }} />
+                            {p.label}
+                        </div>
+                    ))}
+                </div>
             </div>
 
-            <div
-                style={{
-                    background: '#f7fafc',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: '0.375rem',
-                    padding: '0.75rem',
-                    fontSize: '0.75rem',
-                    color: 'var(--color-text-muted)',
-                    marginTop: '1.5rem',
-                }}
-            >
-                This is a general guide to civil court procedure in England & Wales. Specific claim types may have
-                additional requirements or pre-action protocols. If your claim is complex, high-value, or involves
-                issues outside the small claims track, consider seeking professional advice.
+            {/* Steps */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {STEPS.map((step) => {
+                    const phaseConf = PHASE_CONFIG[step.phase];
+                    const isExpanded = expandedId === step.id;
+                    const showPhaseHeader = step.phase !== lastPhase;
+                    if (showPhaseHeader) lastPhase = step.phase;
+
+                    return (
+                        <div key={step.id}>
+                            {/* Phase section header */}
+                            {showPhaseHeader && (
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    padding: '0.625rem 0',
+                                    marginTop: step.id === '1a' ? 0 : '1.25rem',
+                                    borderBottom: `2px solid ${phaseConf.colour}`,
+                                    marginBottom: '0.5rem',
+                                }}>
+                                    <span style={{ fontSize: '1.1rem' }}>{phaseConf.icon}</span>
+                                    <span style={{
+                                        fontSize: '0.85rem',
+                                        fontWeight: 700,
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.06em',
+                                        color: phaseConf.colour,
+                                    }}>
+                                        {phaseConf.label}
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* Step card */}
+                            <button
+                                onClick={() => setExpandedId(isExpanded ? null : step.id)}
+                                style={{
+                                    display: 'block',
+                                    width: '100%',
+                                    textAlign: 'left',
+                                    padding: '1rem 1.25rem',
+                                    background: isExpanded ? phaseConf.bg : 'white',
+                                    border: `1px solid ${isExpanded ? phaseConf.colour : 'var(--color-border)'}`,
+                                    borderLeft: `4px solid ${phaseConf.colour}`,
+                                    borderRadius: '0.5rem',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease',
+                                }}
+                                aria-expanded={isExpanded}
+                                aria-label={`Step ${step.id}: ${step.title}`}
+                            >
+                                {/* Collapsed header */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                                            <span style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                width: 30,
+                                                height: 30,
+                                                borderRadius: '50%',
+                                                background: phaseConf.colour,
+                                                color: '#fff',
+                                                fontSize: '0.7rem',
+                                                fontWeight: 700,
+                                                flexShrink: 0,
+                                            }}>
+                                                {step.id}
+                                            </span>
+                                            <div>
+                                                <p style={{ fontWeight: 600, fontSize: '0.95rem', margin: 0, lineHeight: 1.3 }}>
+                                                    {step.title}
+                                                </p>
+                                                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', margin: '0.2rem 0 0', lineHeight: 1.3 }}>
+                                                    ⏱ {step.timeline}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span style={{
+                                        fontSize: '0.75rem',
+                                        color: 'var(--color-text-muted)',
+                                        transition: 'transform 0.15s',
+                                        transform: isExpanded ? 'rotate(90deg)' : 'none',
+                                        flexShrink: 0,
+                                        marginLeft: '0.75rem',
+                                    }}>
+                                        ▶
+                                    </span>
+                                </div>
+
+                                {/* Expanded content */}
+                                {isExpanded && (
+                                    <div
+                                        style={{ marginTop: '1rem', borderTop: `1px solid ${phaseConf.colour}33`, paddingTop: '1rem' }}
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        {/* What happens */}
+                                        <p style={{ fontSize: '0.9rem', margin: '0 0 1rem', lineHeight: 1.6, color: 'var(--color-text)' }}>
+                                            {step.description}
+                                        </p>
+
+                                        {/* Your action — role-specific */}
+                                        <div style={{
+                                            background: userRole === 'claimant' ? '#eff6ff' : '#fffbeb',
+                                            border: `1px solid ${userRole === 'claimant' ? '#bfdbfe' : '#fde68a'}`,
+                                            borderRadius: '0.5rem',
+                                            padding: '0.875rem 1rem',
+                                            marginBottom: '0.75rem',
+                                        }}>
+                                            <p style={{ fontWeight: 600, fontSize: '0.8rem', margin: '0 0 0.375rem', color: userRole === 'claimant' ? '#1e40af' : '#92400e' }}>
+                                                {userRole === 'claimant' ? '⚔️ Your action (Claimant)' : '🛡️ Your action (Defendant)'}
+                                            </p>
+                                            <p style={{ fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
+                                                {userRole === 'claimant' ? step.claimantAction : step.defendantAction}
+                                            </p>
+                                        </div>
+
+                                        {/* Reference & forms */}
+                                        <div style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '0.375rem',
+                                            fontSize: '0.8rem',
+                                            marginBottom: '0.75rem',
+                                        }}>
+                                            <p style={{ margin: 0, lineHeight: 1.5 }}>
+                                                <strong>CPR basis:</strong>{' '}
+                                                <span style={{ color: 'var(--color-accent)' }}>{step.cprBasis}</span>
+                                            </p>
+                                            {step.form && (
+                                                <p style={{ margin: 0 }}>
+                                                    <strong>Form:</strong>{' '}
+                                                    {step.formUrl ? (
+                                                        <a
+                                                            href={step.formUrl}
+                                                            target={step.formUrl.startsWith('http') ? '_blank' : undefined}
+                                                            rel="noopener noreferrer"
+                                                            style={{ color: 'var(--color-accent)' }}
+                                                        >
+                                                            {step.form} ↗
+                                                        </a>
+                                                    ) : step.form}
+                                                </p>
+                                            )}
+                                            {step.defendantForm && userRole === 'defendant' && (
+                                                <p style={{ margin: 0 }}>
+                                                    <strong>Form:</strong>{' '}
+                                                    {step.defendantFormUrl ? (
+                                                        <a
+                                                            href={step.defendantFormUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            style={{ color: 'var(--color-accent)' }}
+                                                        >
+                                                            {step.defendantForm} ↗
+                                                        </a>
+                                                    ) : step.defendantForm}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Practical tip */}
+                                        <div style={{
+                                            background: '#f8fafc',
+                                            border: '1px solid #e2e8f0',
+                                            padding: '0.75rem 1rem',
+                                            borderRadius: '0.5rem',
+                                        }}>
+                                            <p style={{ fontWeight: 600, fontSize: '0.8rem', margin: '0 0 0.25rem', color: '#475569' }}>
+                                                💡 Practical tip
+                                            </p>
+                                            <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0, lineHeight: 1.6 }}>
+                                                {(userRole === 'claimant' && step.claimantTip) ? step.claimantTip
+                                                    : (userRole === 'defendant' && step.defendantTip) ? step.defendantTip
+                                                        : step.tips}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </button>
+
+                            {/* Decision point */}
+                            {step.decision && (
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.75rem',
+                                    padding: '0.5rem 1rem 0.5rem 3.5rem',
+                                    fontSize: '0.8rem',
+                                    color: '#64748b',
+                                }}>
+                                    <span style={{
+                                        width: 18, height: 18,
+                                        border: `2px solid ${phaseConf.colour}`,
+                                        transform: 'rotate(45deg)',
+                                        flexShrink: 0,
+                                        background: 'white',
+                                    }} />
+                                    <span style={{ fontWeight: 500 }}>{step.decision.question}</span>
+                                    <span style={{
+                                        background: '#dcfce7',
+                                        color: '#166534',
+                                        padding: '0.125rem 0.5rem',
+                                        borderRadius: '1rem',
+                                        fontSize: '0.7rem',
+                                        fontWeight: 600,
+                                    }}>
+                                        Yes → Matter resolved ✓
+                                    </span>
+                                    <span style={{
+                                        background: '#fee2e2',
+                                        color: '#991b1b',
+                                        padding: '0.125rem 0.5rem',
+                                        borderRadius: '1rem',
+                                        fontSize: '0.7rem',
+                                        fontWeight: 600,
+                                    }}>
+                                        No → Continue ↓
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+
+                {/* End node */}
+                <div style={{
+                    padding: '1rem 1.25rem',
+                    background: '#ecfdf5',
+                    border: '1px solid #a7f3d0',
+                    borderLeft: '4px solid #10b981',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    color: '#065f46',
+                    marginTop: '0.5rem',
+                }}>
+                    🏁 Case resolved
+                </div>
+            </div>
+
+            {/* CPR Deadline Calculator */}
+            <DeadlineCalculator />
+
+            {/* Footer disclaimer */}
+            <div style={{
+                background: '#f8fafc',
+                border: '1px solid var(--color-border)',
+                borderRadius: '0.5rem',
+                padding: '1rem',
+                fontSize: '0.8rem',
+                color: 'var(--color-text-muted)',
+                lineHeight: 1.6,
+                marginTop: '2rem',
+            }}>
+                <strong>Disclaimer:</strong> This is a general outline of civil court procedure in England &amp; Wales based on the
+                Civil Procedure Rules. Specific claim types (personal injury, housing, debt, etc.) may have additional
+                pre-action protocols or requirements. Track thresholds are as of October 2023. If your claim is complex,
+                high-value, or involves specialist proceedings, seek professional legal advice.
             </div>
         </div>
     );

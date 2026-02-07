@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 export default function Disclaimer() {
     return (
         <div
@@ -14,7 +16,9 @@ export default function Disclaimer() {
                 fontWeight: 500,
             }}
         >
-            CaseKit is a self-help organisational tool. It does not provide legal advice. You are responsible for all decisions regarding your case.
+            CaseKit is a self-help organisational tool, not a legal advice service.{' '}
+            <Link to="/read-this-first" style={{ color: '#92400e', fontWeight: 600, textDecoration: 'underline' }}>Read This First</Link>
         </div>
     );
 }
+

@@ -21,14 +21,35 @@ export default function YourDataAndAi() {
             </div>
 
             <div className="info-block">
+                <h3>Which providers are supported?</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 'var(--space-3)' }}>
+                    CaseKit supports three AI providers. You choose which one to use in{' '}
+                    <Link to="/api-setup" style={{ fontWeight: 600 }}>API Key Setup</Link>:
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-2)' }}>
+                    {[
+                        { name: 'Anthropic', model: 'Claude', endpoint: 'api.anthropic.com' },
+                        { name: 'OpenAI', model: 'GPT-4', endpoint: 'api.openai.com' },
+                        { name: 'Google', model: 'Gemini', endpoint: 'generativelanguage.googleapis.com' },
+                    ].map((p) => (
+                        <div key={p.name} className="card" style={{ textAlign: 'center', padding: '0.75rem' }}>
+                            <p style={{ fontWeight: 600, fontSize: '0.85rem' }}>{p.name}</p>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.model}</p>
+                            <code style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{p.endpoint}</code>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div className="info-block">
                 <h3>Where does your data go?</h3>
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 'var(--space-3)' }}>
                     When you use an AI feature, your data is sent directly from your computer to
-                    Anthropic's API (<code>api.anthropic.com</code>). It does not pass through any
+                    your chosen provider's API. It does not pass through any
                     CaseKit server — there is no CaseKit server. The connection is:
                 </p>
                 <div className="card" style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', padding: 'var(--space-4)' }}>
-                    Your computer → api.anthropic.com
+                    Your computer → your chosen AI provider
                 </div>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: 'var(--space-3)' }}>
                     No one else — including us — can see what you send or what the AI returns.
@@ -38,17 +59,35 @@ export default function YourDataAndAi() {
             <div className="info-block" style={{ borderColor: '#dc2626', borderLeftWidth: '3px' }}>
                 <h3>AI training and data retention</h3>
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 'var(--space-3)' }}>
-                    <strong>This is important.</strong> When you use the Anthropic API, your data is subject
-                    to <a href="https://www.anthropic.com/policies/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>Anthropic's terms of service</a> and
-                    their <a href="https://www.anthropic.com/policies/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>privacy policy</a>.
+                    <strong>This is important.</strong> When you use any AI provider's API, your data is subject
+                    to that provider's terms of service and privacy policy:
                 </p>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 'var(--space-3)' }}>
-                    As of the time of writing, Anthropic states that API inputs and outputs are not
-                    used to train their models. However, policies can change, and Anthropic may retain
-                    data for safety monitoring, abuse prevention, and legal compliance for a limited
-                    period. You should review their current policies before sending sensitive information.
+                <ul style={{ fontSize: '0.85rem', color: 'var(--text-muted)', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                    <li>
+                        <strong>Anthropic:</strong>{' '}
+                        <a href="https://www.anthropic.com/policies/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>Terms</a>{' / '}
+                        <a href="https://www.anthropic.com/policies/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>Privacy</a>
+                        {' — API data is not used for training as of writing'}
+                    </li>
+                    <li>
+                        <strong>OpenAI:</strong>{' '}
+                        <a href="https://openai.com/policies/terms-of-use" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>Terms</a>{' / '}
+                        <a href="https://openai.com/policies/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>Privacy</a>
+                        {' — API data is not used for training by default as of writing'}
+                    </li>
+                    <li>
+                        <strong>Google:</strong>{' '}
+                        <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>Terms</a>{' / '}
+                        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>Privacy</a>
+                        {' — review their current API data use policy before sending sensitive data'}
+                    </li>
+                </ul>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 'var(--space-3)' }}>
+                    Policies can change. All providers may retain data for safety monitoring, abuse prevention,
+                    and legal compliance for a limited period. Review the current policies for your chosen provider
+                    before sending sensitive information.
                 </p>
-                <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                <p style={{ fontSize: '0.875rem', fontWeight: 600, marginTop: 'var(--space-2)' }}>
                     Treat any data you send to the AI as if it could be seen by a third party.
                 </p>
             </div>
@@ -128,7 +167,7 @@ export default function YourDataAndAi() {
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 'var(--space-2)' }}>
                     Instead, CaseKit runs entirely on your machine. You hold the API key. You approve
                     every transmission. You see exactly what is sent. The data goes directly from you
-                    to Anthropic — we are not in the middle. This is deliberately more complicated for
+                    to the AI provider — we are not in the middle. This is deliberately more complicated for
                     users to set up, but it means you do not have to trust us with your data at all.
                 </p>
             </div>

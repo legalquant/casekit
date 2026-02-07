@@ -30,6 +30,12 @@ pub struct CaseMetadata {
     pub insolvency: bool,
     pub regulatory_overlap: bool,
     pub counterclaim: bool,
+    #[serde(default = "default_user_role")]
+    pub user_role: UserRole,
+}
+
+fn default_user_role() -> UserRole {
+    UserRole::Claimant
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -60,6 +66,14 @@ pub enum ProductServiceType {
     Services,
     #[serde(rename = "digital_content")]
     DigitalContent,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum UserRole {
+    #[serde(rename = "claimant")]
+    Claimant,
+    #[serde(rename = "defendant")]
+    Defendant,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -116,6 +130,7 @@ impl Default for CaseMetadata {
             insolvency: false,
             regulatory_overlap: false,
             counterclaim: false,
+            user_role: UserRole::Claimant,
         }
     }
 }
