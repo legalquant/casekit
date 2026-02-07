@@ -1,0 +1,57 @@
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Rust / Tauri
+target/
+src-tauri/target/
+
+# Build outputs
+*.app
+*.dmg
+*.msi
+*.AppImage
+*.deb
+*.rpm
+
+# Test data (user case files should never be committed)
+test-cases/
+sample-data/
+
+# Logs
+*.log
+npm-debug.log*
+
+# AI assistant artifacts (should never be in public repo)
+.gemini/
+.agent/
+.antigravity/
+.antigravityignore
+ANTIGRAVITY-PROMPT.md
+
+# Old specification docs (contain legacy branding)
+docs/
+
+# Deploy script (contains repo URLs)
+deploy-public.ps1
+
+# Secret keys (should never be committed)
+*.key
+*.pem

@@ -1,0 +1,14 @@
+{
+    "name": "casekit-workspace",
+    "private": true,
+    "version": "0.1.0",
+    "type": "module",
+    "scripts": {
+        "dev": "pnpm --filter casekit dev",
+        "build": "pnpm --filter casekit build",
+        "tauri": "tauri"
+    },
+    "devDependencies": {
+        "@tauri-apps/cli": "^2"
+    }
+}
