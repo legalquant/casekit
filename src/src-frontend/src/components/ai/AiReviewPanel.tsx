@@ -328,10 +328,15 @@ export default function AiReviewPanel() {
                 model = selectedModel;
                 const response = await client.messages.create({
                     model,
-                    max_tokens: 4096,
+                    max_tokens: 16000,
                     messages: [{ role: 'user', content: prompt }],
                 });
-                responseText = response.content[0].type === 'text' ? response.content[0].text : '';
+                // Opus 4.6+ may return thinking blocks before text blocks.
+                // Extract text from ALL text-type content blocks, skipping thinking blocks.
+                responseText = response.content
+                    .filter((block: { type: string }) => block.type === 'text')
+                    .map((block: { type: string; text?: string }) => block.text || '')
+                    .join('\n\n');
                 inputTokens = response.usage.input_tokens;
                 outputTokens = response.usage.output_tokens;
             } else if (chosenProvider === 'openai') {

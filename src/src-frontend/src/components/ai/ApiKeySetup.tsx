@@ -92,11 +92,13 @@ export default function ApiKeySetup() {
                 const { default: Anthropic } = await import('@anthropic-ai/sdk');
                 const client = new Anthropic({ apiKey: key, dangerouslyAllowBrowser: true });
                 const response = await client.messages.create({
-                    model: 'claude-sonnet-4-20250514',
-                    max_tokens: 50,
+                    model: 'claude-sonnet-4-5-20250929',
+                    max_tokens: 100,
                     messages: [{ role: 'user', content: 'Reply with exactly: "CaseKit connection successful."' }],
                 });
-                const text = response.content[0].type === 'text' ? response.content[0].text : 'OK';
+                // Handle thinking blocks (Opus 4.6+) — extract text from text-type blocks
+                const textBlocks = response.content.filter((b: { type: string }) => b.type === 'text');
+                const text = textBlocks.length > 0 ? (textBlocks[0] as { type: string; text: string }).text : 'OK';
                 setTestResult(`✓ Connection successful: ${text}`);
             } else if (provider === 'openai') {
                 const res = await fetch('https://api.openai.com/v1/models', {
