@@ -341,9 +341,17 @@ export default function AiReviewPanel() {
                 outputTokens = response.usage.output_tokens;
             } else if (chosenProvider === 'openai') {
                 model = selectedModel;
-                const body: Record<string, unknown> = { model, max_tokens: 4096, messages: [{ role: 'user', content: prompt }] };
-                // Force JSON output for merits assessment
-                if (selectedType === 'merits_assessment') {
+                const isReasoning = model.startsWith('o3') || model.startsWith('o4');
+                const body: Record<string, unknown> = {
+                    model,
+                    // Reasoning models (o3, o4-mini) require max_completion_tokens; GPT models use max_tokens
+                    ...(isReasoning
+                        ? { max_completion_tokens: 16000 }
+                        : { max_tokens: 16000 }),
+                    messages: [{ role: 'user', content: prompt }],
+                };
+                // Force JSON output for merits assessment (not supported on reasoning models)
+                if (selectedType === 'merits_assessment' && !isReasoning) {
                     body.response_format = { type: 'json_object' };
                 }
                 const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -358,22 +366,35 @@ export default function AiReviewPanel() {
                 outputTokens = data.usage?.completion_tokens || 0;
             } else if (chosenProvider === 'gemini') {
                 model = selectedModel;
-                const genConfig: Record<string, unknown> = { maxOutputTokens: 4096 };
+                const genConfig: Record<string, unknown> = { maxOutputTokens: 16000 };
                 // Force JSON output for merits assessment
                 if (selectedType === 'merits_assessment') {
                     genConfig.responseMimeType = 'application/json';
                 }
+                // Gemini 2.5+ and 3 models have thinking enabled by default.
+                // Set thinkingConfig to avoid thinking tokens eating into output token limit.
+                const thinkingConfig: Record<string, unknown> = { thinkingBudget: 0 };
                 const res = await fetch(
                     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
                     {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: genConfig }),
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            generationConfig: genConfig,
+                            thinkingConfig,
+                        }),
                     },
                 );
                 if (!res.ok) { const err = await res.text(); throw new Error(`Gemini error: ${err}`); }
                 const data = await res.json();
-                responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                // Gemini may return multiple parts including thinking parts.
+                // Extract only non-thought text parts.
+                const parts = data.candidates?.[0]?.content?.parts || [];
+                responseText = parts
+                    .filter((p: { thought?: boolean; text?: string }) => !p.thought && p.text)
+                    .map((p: { text: string }) => p.text)
+                    .join('\n\n') || '';
                 inputTokens = data.usageMetadata?.promptTokenCount || 0;
                 outputTokens = data.usageMetadata?.candidatesTokenCount || 0;
             } else {
