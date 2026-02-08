@@ -1,0 +1,111 @@
+name: Build & Release CaseKit
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      build_windows:
+        description: 'Build Windows installer'
+        type: boolean
+        default: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install frontend dependencies
+        run: pnpm install
+        working-directory: src
+
+      - name: Run frontend tests
+        run: pnpm --filter casekit test
+        working-directory: src
+
+  build-windows:
+    name: Build Windows
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src/src-tauri
+
+      - name: Install frontend dependencies
+        run: pnpm install
+        working-directory: src
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: src
+          tagName: ${{ github.ref_name }}
+          releaseName: 'CaseKit ${{ github.ref_name }}'
+          releaseBody: |
+            ## CaseKit ${{ github.ref_name }}
+
+            ### Installation
+            1. Download `CaseKit_x.x.x_x64-setup.exe` (NSIS installer) or `CaseKit_x.x.x_x64_en-US.msi`
+            2. Run the installer — it will install CaseKit to your Program Files
+            3. **Optional:** For OCR support on scanned documents, install [Tesseract OCR](https://github.com/UB-Mannheim/tesseract/wiki) separately — CaseKit will detect it automatically
+
+            ### What's included
+            - Self-contained Windows executable (no runtime dependencies)
+            - All document parsing (PDF, DOCX, EML, TXT) built in
+            - AI features work with your own API key (Anthropic, OpenAI, or Google)
+
+            ### What's NOT included
+            - **Tesseract OCR** — optional, only needed for scanned document/image text extraction. Install separately if needed.
+            - No internet connection required except for optional AI features
+
+            ### System Requirements
+            - Windows 10 or later (x64)
+            - ~100MB disk space
+            - No admin rights needed for portable version
+          releaseDraft: true
+          prerelease: false
+          includeUpdaterJson: false
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: casekit-windows
+          path: |
+            src/src-tauri/target/release/bundle/nsis/*.exe
+            src/src-tauri/target/release/bundle/msi/*.msi
+          retention-days: 30
