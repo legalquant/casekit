@@ -5,11 +5,6 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
-    inputs:
-      build_windows:
-        description: 'Build Windows installer'
-        type: boolean
-        default: true
 
 env:
   CARGO_TERM_COLOR: always
@@ -31,13 +26,17 @@ jobs:
         with:
           version: 10
 
-      - name: Install frontend dependencies
-        run: pnpm install
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
         working-directory: src
 
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: src/src-frontend
+
       - name: Run frontend tests
-        run: pnpm --filter casekit test
-        working-directory: src
+        run: pnpm test
+        working-directory: src/src-frontend
 
   build-windows:
     name: Build Windows
@@ -64,9 +63,13 @@ jobs:
         with:
           workspaces: src/src-tauri
 
-      - name: Install frontend dependencies
-        run: pnpm install
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
         working-directory: src
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: src/src-frontend
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
@@ -81,27 +84,21 @@ jobs:
 
             ### Installation
             1. Download `CaseKit_x.x.x_x64-setup.exe` (NSIS installer) or `CaseKit_x.x.x_x64_en-US.msi`
-            2. Run the installer — it will install CaseKit to your Program Files
-            3. **Optional:** For OCR support on scanned documents, install [Tesseract OCR](https://github.com/UB-Mannheim/tesseract/wiki) separately — CaseKit will detect it automatically
+            2. Run the installer
+            3. **Optional:** For OCR on scanned documents, install [Tesseract OCR](https://github.com/UB-Mannheim/tesseract/wiki) separately
 
-            ### What's included
+            ### Included
             - Self-contained Windows executable (no runtime dependencies)
-            - All document parsing (PDF, DOCX, EML, TXT) built in
+            - PDF, DOCX, EML, TXT parsing built in
             - AI features work with your own API key (Anthropic, OpenAI, or Google)
 
-            ### What's NOT included
-            - **Tesseract OCR** — optional, only needed for scanned document/image text extraction. Install separately if needed.
-            - No internet connection required except for optional AI features
-
-            ### System Requirements
-            - Windows 10 or later (x64)
-            - ~100MB disk space
-            - No admin rights needed for portable version
+            ### Not included
+            - **Tesseract OCR** — optional, only needed for scanned images. Install separately if needed.
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: false
 
-      - name: Upload artifacts
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: casekit-windows
