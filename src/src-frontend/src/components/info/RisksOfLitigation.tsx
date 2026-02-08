@@ -52,7 +52,7 @@ export default function RisksOfLitigation() {
                             <tr style={{ borderBottom: '1px solid var(--border)' }}>
                                 <td style={{ padding: 'var(--space-2)' }}>Fast track</td>
                                 <td style={{ padding: 'var(--space-2)' }}>£10,000–£25,000</td>
-                                <td style={{ padding: 'var(--space-2)', color: 'var(--color-warning)' }}>Significant — loser typically pays winner's costs</td>
+                                <td style={{ padding: 'var(--space-2)', color: 'var(--amber)' }}>Significant — loser typically pays winner's costs</td>
                             </tr>
                             <tr>
                                 <td style={{ padding: 'var(--space-2)' }}>Multi-track</td>

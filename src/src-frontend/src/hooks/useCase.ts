@@ -30,6 +30,7 @@ interface CaseStore {
     loadChronology: () => Promise<void>;
     addChronologyEntry: (entry: ChronologyEntry) => Promise<void>;
     removeChronologyEntry: (entryId: string) => Promise<void>;
+    updateChronologyEntry: (entry: ChronologyEntry) => Promise<void>;
     scanDocumentsForDates: () => Promise<ChronologyEntry[]>;
 
     // Case management
@@ -164,6 +165,17 @@ export const useCaseStore = create<CaseStore>((set, get) => ({
         if (!currentCase) return;
         try {
             const updated = await commands.removeChronologyEntry(currentCase.name, entryId);
+            set({ chronology: updated });
+        } catch (e) {
+            set({ error: String(e) });
+        }
+    },
+
+    updateChronologyEntry: async (entry: ChronologyEntry) => {
+        const currentCase = get().currentCase;
+        if (!currentCase) return;
+        try {
+            const updated = await commands.updateChronologyEntry(currentCase.name, entry);
             set({ chronology: updated });
         } catch (e) {
             set({ error: String(e) });

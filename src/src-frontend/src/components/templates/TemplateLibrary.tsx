@@ -56,7 +56,7 @@ const HMCTS_FORMS: HMCTSForm[] = [
         url: 'https://www.gov.uk/government/publications/form-n150-allocation-questionnaire',
         whenToUse: 'After the defendant has filed a defence and the court sends allocation directions.',
     },
-    // TODO: Verify all URLs are current — gov.uk reorganises form pages periodically
+    // Note: gov.uk periodically reorganises form pages — if a link fails, search gov.uk for the form number
 ];
 
 interface TemplateLetter {
@@ -140,15 +140,18 @@ Yours {{faithfully / sincerely}},
 
 export default function TemplateLibrary() {
     return (
-        <div style={{ maxWidth: 800, margin: '0 auto' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '1.5rem' }}>
+        <div className="page">
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '1.5rem' }}>
                 Templates & Forms
             </h1>
 
             {/* HMCTS Forms */}
             <h2 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.75rem' }}>HMCTS Court Forms</h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
-                Official court forms from gov.uk. Click to download the form from the government website.
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                Official court forms from gov.uk. Click to open the form on the government website.
+            </p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                If a link does not open, search <a href="https://www.gov.uk/government/collections/court-and-tribunal-forms" target="_blank" rel="noopener noreferrer" style={{ fontWeight: 500 }}>gov.uk court forms</a> for the form number — the government occasionally reorganises URLs.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '2rem' }}>
@@ -162,12 +165,20 @@ export default function TemplateLibrary() {
                                         href={form.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--color-accent)' }}
+                                        style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--accent)' }}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            import('@tauri-apps/plugin-opener').then((mod) => {
+                                                mod.openUrl(form.url);
+                                            }).catch(() => {
+                                                window.open(form.url, '_blank');
+                                            });
+                                        }}
                                     >
                                         {form.name} ↗
                                     </a>
                                 </div>
-                                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{form.description}</p>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{form.description}</p>
                                 <p style={{ fontSize: '0.75rem', marginTop: '0.375rem' }}>
                                     <strong>When to use:</strong> {form.whenToUse}
                                 </p>
@@ -179,7 +190,7 @@ export default function TemplateLibrary() {
 
             {/* Template Letters */}
             <h2 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.75rem' }}>Template Letters</h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
                 Starting points with placeholders. These are not auto-filled — review and adapt to your circumstances.
             </p>
 
@@ -187,13 +198,13 @@ export default function TemplateLibrary() {
                 {TEMPLATE_LETTERS.map((template) => (
                     <div key={template.name} className="card">
                         <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.25rem' }}>{template.name}</h3>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
                             {template.description}
                         </p>
                         <pre
                             style={{
                                 background: '#f7fafc',
-                                border: '1px solid var(--color-border)',
+                                border: '1px solid var(--border)',
                                 borderRadius: '0.375rem',
                                 padding: '1rem',
                                 fontSize: '0.75rem',

@@ -225,12 +225,12 @@ export default function ProceduralRoadmap() {
     let lastPhase: Phase | '' = '';
 
     return (
-        <div style={{ maxWidth: 820, margin: '0 auto', padding: '0 1rem' }}>
+        <div className="page">
             {/* Header */}
-            <h1 style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '0.25rem' }}>
+            <h1 style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '0.25rem' }}>
                 Procedural Outline
             </h1>
-            <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem', lineHeight: 1.5 }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.5rem', lineHeight: 1.5 }}>
                 Civil court procedure in England &amp; Wales — adapted to your role.
             </p>
             <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginBottom: '1rem', lineHeight: 1.4 }}>
@@ -264,7 +264,7 @@ export default function ProceduralRoadmap() {
 
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                     {Object.values(PHASE_CONFIG).map((p) => (
-                        <div key={p.label} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                        <div key={p.label} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                             <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.colour, display: 'inline-block' }} />
                             {p.label}
                         </div>
@@ -315,7 +315,7 @@ export default function ProceduralRoadmap() {
                                     textAlign: 'left',
                                     padding: '1rem 1.25rem',
                                     background: isExpanded ? phaseConf.bg : 'white',
-                                    border: `1px solid ${isExpanded ? phaseConf.colour : 'var(--color-border)'}`,
+                                    border: `1px solid ${isExpanded ? phaseConf.colour : 'var(--border)'}`,
                                     borderLeft: `4px solid ${phaseConf.colour}`,
                                     borderRadius: '0.5rem',
                                     cursor: 'pointer',
@@ -347,7 +347,7 @@ export default function ProceduralRoadmap() {
                                                 <p style={{ fontWeight: 600, fontSize: '0.95rem', margin: 0, lineHeight: 1.3 }}>
                                                     {step.title}
                                                 </p>
-                                                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', margin: '0.2rem 0 0', lineHeight: 1.3 }}>
+                                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0.2rem 0 0', lineHeight: 1.3 }}>
                                                     ⏱ {step.timeline}
                                                 </p>
                                             </div>
@@ -355,7 +355,7 @@ export default function ProceduralRoadmap() {
                                     </div>
                                     <span style={{
                                         fontSize: '0.75rem',
-                                        color: 'var(--color-text-muted)',
+                                        color: 'var(--text-muted)',
                                         transition: 'transform 0.15s',
                                         transform: isExpanded ? 'rotate(90deg)' : 'none',
                                         flexShrink: 0,
@@ -372,7 +372,7 @@ export default function ProceduralRoadmap() {
                                         onClick={(e) => e.stopPropagation()}
                                     >
                                         {/* What happens */}
-                                        <p style={{ fontSize: '0.9rem', margin: '0 0 1rem', lineHeight: 1.6, color: 'var(--color-text)' }}>
+                                        <p style={{ fontSize: '0.9rem', margin: '0 0 1rem', lineHeight: 1.6, color: 'var(--text)' }}>
                                             {step.description}
                                         </p>
 
@@ -402,7 +402,7 @@ export default function ProceduralRoadmap() {
                                         }}>
                                             <p style={{ margin: 0, lineHeight: 1.5 }}>
                                                 <strong>CPR basis:</strong>{' '}
-                                                <span style={{ color: 'var(--color-accent)' }}>{step.cprBasis}</span>
+                                                <span style={{ color: 'var(--accent)' }}>{step.cprBasis}</span>
                                             </p>
                                             {step.form && (
                                                 <p style={{ margin: 0 }}>
@@ -412,7 +412,7 @@ export default function ProceduralRoadmap() {
                                                             href={step.formUrl}
                                                             target={step.formUrl.startsWith('http') ? '_blank' : undefined}
                                                             rel="noopener noreferrer"
-                                                            style={{ color: 'var(--color-accent)' }}
+                                                            style={{ color: 'var(--accent)' }}
                                                         >
                                                             {step.form} ↗
                                                         </a>
@@ -427,7 +427,7 @@ export default function ProceduralRoadmap() {
                                                             href={step.defendantFormUrl}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            style={{ color: 'var(--color-accent)' }}
+                                                            style={{ color: 'var(--accent)' }}
                                                         >
                                                             {step.defendantForm} ↗
                                                         </a>
@@ -522,11 +522,11 @@ export default function ProceduralRoadmap() {
             {/* Footer disclaimer */}
             <div style={{
                 background: '#f8fafc',
-                border: '1px solid var(--color-border)',
+                border: '1px solid var(--border)',
                 borderRadius: '0.5rem',
                 padding: '1rem',
                 fontSize: '0.8rem',
-                color: 'var(--color-text-muted)',
+                color: 'var(--text-muted)',
                 lineHeight: 1.6,
                 marginTop: '2rem',
             }}>

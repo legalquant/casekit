@@ -66,7 +66,7 @@ export default function RedactionTool({ text, onRedacted }: RedactionToolProps) 
             <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.5rem' }}>
                 Redaction Tool
             </h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
                 Remove sensitive information before sending to AI. Matched items will be replaced with [REDACTED].
             </p>
 
@@ -102,7 +102,7 @@ export default function RedactionTool({ text, onRedacted }: RedactionToolProps) 
                                 {redactions[i].count} found
                             </span>
                         )}
-                        <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                             {p.description}
                         </span>
                     </label>
@@ -122,7 +122,7 @@ export default function RedactionTool({ text, onRedacted }: RedactionToolProps) 
                     style={{ fontSize: '0.8rem', resize: 'vertical' }}
                 />
                 {customCount > 0 && (
-                    <p style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
                         {customCount} custom term{customCount !== 1 ? 's' : ''} will be redacted
                     </p>
                 )}
@@ -132,7 +132,7 @@ export default function RedactionTool({ text, onRedacted }: RedactionToolProps) 
                 <button className="btn btn-primary" onClick={applyRedactions}>
                     Apply Redactions ({totalFound + customCount} items)
                 </button>
-                <p style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', margin: 0 }}>
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>
                     Review the redacted text before sending
                 </p>
             </div>

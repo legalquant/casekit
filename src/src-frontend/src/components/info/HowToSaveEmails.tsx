@@ -82,7 +82,7 @@ const PROVIDERS = [
 
 export default function HowToSaveEmails() {
     return (
-        <div className="page" style={{ maxWidth: '48rem' }}>
+        <div className="page">
             <div className="page-header">
                 <h1>How to Save Emails</h1>
                 <p>
@@ -147,7 +147,7 @@ export default function HowToSaveEmails() {
             </div>
 
             <div style={{ display: 'flex', gap: 'var(--space-3)', padding: 'var(--space-5) 0', flexWrap: 'wrap' }}>
-                <Link to="/cases" className="btn btn-primary">
+                <Link to="/documents" className="btn btn-primary">
                     Go to Documents
                 </Link>
                 <Link to="/procedure" className="btn btn-secondary">

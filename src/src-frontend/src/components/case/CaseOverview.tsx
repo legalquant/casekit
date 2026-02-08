@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useCaseStore } from '../../hooks/useCase';
 import { loadAiHistory } from '../../lib/tauri-commands';
 import type { AiHistoryRecord } from '../../lib/tauri-commands';
@@ -20,11 +20,11 @@ export default function CaseOverview() {
     const cases = useCaseStore((s) => s.cases);
     const loading = useCaseStore((s) => s.loading);
     const error = useCaseStore((s) => s.error);
-    const loadCases = useCaseStore((s) => s.loadCases);
     const selectCase = useCaseStore((s) => s.selectCase);
     const createNewCase = useCaseStore((s) => s.createNewCase);
     const clearCurrentCase = useCaseStore((s) => s.clearCurrentCase);
 
+    const [searchParams, setSearchParams] = useSearchParams();
     const [showCreate, setShowCreate] = useState(false);
     const [newName, setNewName] = useState('');
     const [newClaimant, setNewClaimant] = useState('');
@@ -34,9 +34,15 @@ export default function CaseOverview() {
     const [aiHistory, setAiHistory] = useState<AiHistoryRecord[]>([]);
     const [expandedAi, setExpandedAi] = useState<Set<string>>(new Set());
 
+    // Cases are loaded centrally in AppShell — no need to reload here
+
+    // Auto-open create form when navigated with ?new=1
     useEffect(() => {
-        loadCases();
-    }, []);
+        if (searchParams.get('new') === '1' && !currentCase) {
+            setShowCreate(true);
+            setSearchParams({}, { replace: true });
+        }
+    }, [searchParams]);
 
     // Load latest AI analysis when a case is selected
     useEffect(() => {
@@ -81,9 +87,9 @@ export default function CaseOverview() {
         };
 
         return (
-            <div className="page" style={{ maxWidth: 900 }}>
+            <div className="page">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
                         {currentCase.name}
                     </h1>
                     <button className="btn btn-ghost" onClick={clearCurrentCase} style={{ fontSize: '0.8rem' }}>
@@ -91,26 +97,26 @@ export default function CaseOverview() {
                     </button>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
                     {/* Parties */}
                     <div className="card">
                         <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem' }}>Parties</h2>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             <div>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Claimant</span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Claimant</span>
                                 <p style={{ fontWeight: 500 }}>
                                     {currentCase.claimant_name}
                                     {currentCase.user_role === 'claimant' && (
-                                        <span style={{ marginLeft: 8, fontSize: '0.65rem', padding: '2px 6px', borderRadius: 3, background: '#dbeafe', color: '#1e40af', fontWeight: 600 }}>YOU</span>
+                                        <span style={{ marginLeft: 8, fontSize: '0.75rem', padding: '2px 6px', borderRadius: 3, background: '#dbeafe', color: '#1e40af', fontWeight: 600 }}>YOU</span>
                                     )}
                                 </p>
                             </div>
                             <div>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Defendant</span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Defendant</span>
                                 <p style={{ fontWeight: 500 }}>
                                     {currentCase.defendant_name}
                                     {currentCase.user_role === 'defendant' && (
-                                        <span style={{ marginLeft: 8, fontSize: '0.65rem', padding: '2px 6px', borderRadius: 3, background: '#dbeafe', color: '#1e40af', fontWeight: 600 }}>YOU</span>
+                                        <span style={{ marginLeft: 8, fontSize: '0.75rem', padding: '2px 6px', borderRadius: 3, background: '#dbeafe', color: '#1e40af', fontWeight: 600 }}>YOU</span>
                                     )}
                                 </p>
                                 <span className="badge badge-grey" style={{ marginTop: '0.25rem', textTransform: 'capitalize' }}>
@@ -125,15 +131,15 @@ export default function CaseOverview() {
                         <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem' }}>Case Status</h2>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             <div>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Current Stage</span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Current Stage</span>
                                 <p style={{ fontWeight: 500 }}>{statusLabels[currentCase.status] || currentCase.status}</p>
                             </div>
                             <div>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Claim Value</span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Claim Value</span>
                                 <p style={{ fontWeight: 500 }}>£{currentCase.claim_value.toLocaleString()}</p>
                             </div>
                             <div>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Risk Assessment</span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Risk Assessment</span>
                                 <span
                                     className={`badge ${currentCase.overall_risk === 'within_scope'
                                         ? 'badge-green'
@@ -155,7 +161,7 @@ export default function CaseOverview() {
                     {/* Description */}
                     <div className="card" style={{ gridColumn: '1 / -1' }}>
                         <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem' }}>Description</h2>
-                        <p style={{ fontSize: '0.875rem', color: currentCase.description ? 'var(--color-text)' : 'var(--color-text-muted)' }}>
+                        <p style={{ fontSize: '0.875rem', color: currentCase.description ? 'var(--text)' : 'var(--text-muted)' }}>
                             {currentCase.description || 'No description provided yet.'}
                         </p>
                     </div>
@@ -165,19 +171,19 @@ export default function CaseOverview() {
                         <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem' }}>Key Dates</h2>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
                             <div>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Purchase / Service</span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Purchase / Service</span>
                                 <p style={{ fontWeight: 500, fontSize: '0.875rem' }}>
                                     {currentCase.date_of_purchase || 'Not set'}
                                 </p>
                             </div>
                             <div>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Problem Discovered</span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Problem Discovered</span>
                                 <p style={{ fontWeight: 500, fontSize: '0.875rem' }}>
                                     {currentCase.date_problem_discovered || 'Not set'}
                                 </p>
                             </div>
                             <div>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>First Complaint</span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>First Complaint</span>
                                 <p style={{ fontWeight: 500, fontSize: '0.875rem' }}>
                                     {currentCase.date_first_complained || 'Not set'}
                                 </p>
@@ -194,14 +200,28 @@ export default function CaseOverview() {
                                     const entryId = entry.id || String(i);
                                     const isExpanded = expandedAi.has(entryId);
                                     return (
-                                        <div key={entryId} style={{
-                                            padding: '0.625rem 0.75rem',
-                                            background: '#f8fafc',
-                                            border: '1px solid var(--color-border)',
-                                            borderRadius: '0.375rem',
-                                            cursor: 'pointer',
-                                            transition: 'border-color 0.15s',
-                                        }}
+                                        <div key={entryId}
+                                            role="button"
+                                            tabIndex={0}
+                                            style={{
+                                                padding: '0.625rem 0.75rem',
+                                                background: '#f8fafc',
+                                                border: '1px solid var(--border)',
+                                                borderRadius: '0.375rem',
+                                                cursor: 'pointer',
+                                                transition: 'border-color 0.15s',
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault();
+                                                    setExpandedAi(prev => {
+                                                        const next = new Set(prev);
+                                                        if (next.has(entryId)) next.delete(entryId);
+                                                        else next.add(entryId);
+                                                        return next;
+                                                    });
+                                                }
+                                            }}
                                             onClick={() => {
                                                 setExpandedAi(prev => {
                                                     const next = new Set(prev);
@@ -216,10 +236,10 @@ export default function CaseOverview() {
                                                     {AI_TYPE_LABELS[entry.callType] || entry.callType}
                                                 </span>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                    <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
+                                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                                                         {new Date(entry.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                                                     </span>
-                                                    <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.15s' }}>
+                                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.15s' }}>
                                                         &#9660;
                                                     </span>
                                                 </div>
@@ -255,7 +275,7 @@ export default function CaseOverview() {
                                                                             )}
 
                                                                             {/* Positions side by side */}
-                                                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                                                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '0.5rem' }}>
                                                                                 <div style={{ padding: '0.5rem', background: '#eff6ff', borderRadius: '0.25rem', borderLeft: '3px solid #3b82f6' }}>
                                                                                     <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1e40af', marginBottom: '0.25rem' }}>Claimant Position</p>
                                                                                     {parsed.claimantPosition?.potentialCausesOfAction?.length > 0 && (
@@ -379,7 +399,7 @@ export default function CaseOverview() {
                                                     {entry.summary || entry.response.slice(0, 200) + '...'}
                                                 </p>
                                             )}
-                                            <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+                                            <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
                                                 <span>{entry.model}</span>
                                                 <span>{entry.inputTokens + entry.outputTokens} tokens</span>
                                             </div>
@@ -389,7 +409,7 @@ export default function CaseOverview() {
                                 <Link to="/ai-review" style={{ fontSize: '0.8rem', fontWeight: 500 }}>View full analysis</Link>
                             </div>
                         ) : (
-                            <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                                 <p>No AI analysis has been run for this case yet.</p>
                                 <Link to="/ai-review" style={{ fontSize: '0.8rem', fontWeight: 500 }}>Run Case Analysis</Link>
                             </div>
@@ -398,8 +418,8 @@ export default function CaseOverview() {
 
                     {/* Complexity Triggers */}
                     {currentCase.complexity_triggers.length > 0 && (
-                        <div className="card" style={{ gridColumn: '1 / -1', borderColor: 'var(--color-warning)' }}>
-                            <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem', color: 'var(--color-warning)' }}>
+                        <div className="card" style={{ gridColumn: '1 / -1', borderColor: 'var(--amber)' }}>
+                            <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem', color: 'var(--amber)' }}>
                                 Complexity Triggers
                             </h2>
                             <ul style={{ paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
@@ -416,7 +436,7 @@ export default function CaseOverview() {
 
     // No case selected — show case list and create form
     return (
-        <div className="page" style={{ maxWidth: 700 }}>
+        <div className="page">
             <div className="page-header">
                 <h1>My Cases</h1>
                 <p>Create a new case or select an existing one to continue working.</p>
@@ -474,7 +494,7 @@ export default function CaseOverview() {
                                 style={{ width: '100%' }}
                             />
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--space-3)' }}>
                             <div>
                                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: 'var(--space-1)', color: 'var(--text-muted)' }}>
                                     Claimant{newRole === 'claimant' ? ' (you)' : ''}

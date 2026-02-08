@@ -93,6 +93,13 @@ export async function removeChronologyEntry(
     return invoke('remove_chronology_entry', { caseName, entryId });
 }
 
+export async function updateChronologyEntry(
+    caseName: string,
+    entry: ChronologyEntry
+): Promise<ChronologyEntry[]> {
+    return invoke('update_chronology_entry', { caseName, entry });
+}
+
 // Export
 export async function exportBundle(
     caseName: string,

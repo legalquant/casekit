@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import AppShell from './components/layout/AppShell';
+import ScrollToTop from './components/layout/ScrollToTop';
 
 // Information pages (no case needed)
 import LandingPage from './components/info/LandingPage';
@@ -33,6 +34,7 @@ import CitationAudit from './components/research/CitationAudit';
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route element={<AppShell />}>
           {/* Information hub (accessible without a case) */}
@@ -40,7 +42,6 @@ export default function App() {
           <Route path="/read-this-first" element={<ReadThisFirst />} />
 
           <Route path="/procedure" element={<ProceduralRoadmap />} />
-          <Route path="/forms" element={<TemplateLibrary />} />
           <Route path="/templates" element={<TemplateLibrary />} />
           <Route path="/links" element={<UsefulLinks />} />
           <Route path="/help" element={<ReferralPanel />} />

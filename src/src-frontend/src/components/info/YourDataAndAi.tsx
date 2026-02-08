@@ -35,7 +35,7 @@ export default function YourDataAndAi() {
                         <div key={p.name} className="card" style={{ textAlign: 'center', padding: '0.75rem' }}>
                             <p style={{ fontWeight: 600, fontSize: '0.85rem' }}>{p.name}</p>
                             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.model}</p>
-                            <code style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{p.endpoint}</code>
+                            <code style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.endpoint}</code>
                         </div>
                     ))}
                 </div>
@@ -65,20 +65,20 @@ export default function YourDataAndAi() {
                 <ul style={{ fontSize: '0.85rem', color: 'var(--text-muted)', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
                     <li>
                         <strong>Anthropic:</strong>{' '}
-                        <a href="https://www.anthropic.com/policies/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>Terms</a>{' / '}
-                        <a href="https://www.anthropic.com/policies/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>Privacy</a>
+                        <a href="https://www.anthropic.com/policies/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>Terms</a>{' / '}
+                        <a href="https://www.anthropic.com/policies/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>Privacy</a>
                         {' — API data is not used for training as of writing'}
                     </li>
                     <li>
                         <strong>OpenAI:</strong>{' '}
-                        <a href="https://openai.com/policies/terms-of-use" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>Terms</a>{' / '}
-                        <a href="https://openai.com/policies/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>Privacy</a>
+                        <a href="https://openai.com/policies/terms-of-use" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>Terms</a>{' / '}
+                        <a href="https://openai.com/policies/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>Privacy</a>
                         {' — API data is not used for training by default as of writing'}
                     </li>
                     <li>
                         <strong>Google:</strong>{' '}
-                        <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>Terms</a>{' / '}
-                        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>Privacy</a>
+                        <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>Terms</a>{' / '}
+                        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>Privacy</a>
                         {' — review their current API data use policy before sending sensitive data'}
                     </li>
                 </ul>

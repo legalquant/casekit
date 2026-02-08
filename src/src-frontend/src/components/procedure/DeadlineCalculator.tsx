@@ -293,7 +293,7 @@ function MonthGrid({ monthStart, dispatch, deemedService, deadline }: CalendarPr
                 {DAY_LABELS.map((label) => (
                     <div key={label} style={{
                         textAlign: 'center',
-                        fontSize: '0.65rem',
+                        fontSize: '0.75rem',
                         fontWeight: 600,
                         color: '#94a3b8',
                         padding: '0.25rem 0',
@@ -444,15 +444,15 @@ export default function DeadlineCalculator() {
     return (
         <div style={{
             background: 'white',
-            border: '1px solid var(--color-border)',
+            border: '1px solid var(--border)',
             borderRadius: '0.75rem',
             padding: '1.5rem',
             marginTop: '2rem',
         }}>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--color-primary)', margin: '0 0 0.25rem' }}>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)', margin: '0 0 0.25rem' }}>
                 📅 CPR Deadline Calculator
             </h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', margin: '0 0 1.25rem', lineHeight: 1.5 }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 1.25rem', lineHeight: 1.5 }}>
                 Calculate deemed service dates and response deadlines using CPR rules.
                 Weekends and UK bank holidays are automatically excluded from business day counts.
             </p>
@@ -477,7 +477,7 @@ export default function DeadlineCalculator() {
                             width: '100%',
                             padding: '0.5rem 0.75rem',
                             fontSize: '0.85rem',
-                            border: '1px solid var(--color-border)',
+                            border: '1px solid var(--border)',
                             borderRadius: '0.375rem',
                             background: 'white',
                             boxSizing: 'border-box',
@@ -497,7 +497,7 @@ export default function DeadlineCalculator() {
                             width: '100%',
                             padding: '0.5rem 0.75rem',
                             fontSize: '0.85rem',
-                            border: '1px solid var(--color-border)',
+                            border: '1px solid var(--border)',
                             borderRadius: '0.375rem',
                             background: 'white',
                             boxSizing: 'border-box',
@@ -524,7 +524,7 @@ export default function DeadlineCalculator() {
                             width: '100%',
                             padding: '0.5rem 0.75rem',
                             fontSize: '0.85rem',
-                            border: '1px solid var(--color-border)',
+                            border: '1px solid var(--border)',
                             borderRadius: '0.375rem',
                             background: 'white',
                             boxSizing: 'border-box',

@@ -157,7 +157,7 @@ export default function Pricing() {
                                         <td style={{ padding: 'var(--space-2)' }}>
                                             {p.name}
                                             {p.recommended && (
-                                                <span className="badge badge-green" style={{ marginLeft: '0.5rem', fontSize: '0.6rem' }}>
+                                                <span className="badge badge-green" style={{ marginLeft: '0.5rem', fontSize: '0.75rem' }}>
                                                     Recommended
                                                 </span>
                                             )}
@@ -202,7 +202,7 @@ export default function Pricing() {
                                 <div>
                                     <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{p.name}</span>
                                     {p.recommended && (
-                                        <span className="badge badge-green" style={{ marginLeft: '0.5rem', fontSize: '0.6rem' }}>
+                                        <span className="badge badge-green" style={{ marginLeft: '0.5rem', fontSize: '0.75rem' }}>
                                             Recommended
                                         </span>
                                     )}

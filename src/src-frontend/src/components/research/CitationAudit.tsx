@@ -241,83 +241,67 @@ export default function CitationAudit() {
         errors: citations.filter((c) => c.status === 'error').length,
     };
 
-    // ===== No case selected =====
-    if (!caseName) {
-        return (
-            <div className="page">
-                <div className="page-header">
-                    <h1>Citation Audit</h1>
-                    <p>
-                        Verify legal citations in your case documents against BAILII and Find Case Law.
-                    </p>
-                </div>
-
-                <div className="card" style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: 'var(--space-3)' }}>
-                        Select a case to scan its documents for citations.
-                    </p>
-                    <Link to="/cases" className="btn btn-primary">
-                        Select a Case
-                    </Link>
-
-                    <div style={{ marginTop: 'var(--space-6)', borderTop: '1px solid var(--border-light)', paddingTop: 'var(--space-4)' }}>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: 'var(--space-2)' }}>
-                            Or paste text directly to check citations without a case:
-                        </p>
-                        <button className="btn btn-secondary" onClick={() => setShowPaste(true)} style={{ fontSize: '0.8rem' }}>
-                            Paste Text Instead
-                        </button>
-                    </div>
-                </div>
-
-                {showPaste && (
-                    <div className="card" style={{ marginTop: 'var(--space-4)' }}>
-                        <textarea
-                            value={pasteText}
-                            onChange={(e) => setPasteText(e.target.value)}
-                            placeholder="Paste text containing case law citations here…"
-                            style={{
-                                width: '100%', minHeight: '140px', padding: 'var(--space-3)',
-                                border: '1px solid var(--border)', borderRadius: 'var(--radius)',
-                                fontFamily: 'var(--font-sans)', fontSize: '0.85rem', lineHeight: 1.6,
-                                resize: 'vertical', outline: 'none',
-                            }}
-                        />
-                        <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-3)' }}>
-                            <button className="btn btn-primary" onClick={handleExtract} disabled={!pasteText.trim() || isExtracting}>
-                                {isExtracting ? 'Extracting…' : 'Extract Citations'}
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* Show results even without a case */}
-                {citations.length > 0 && <ResultsSection
-                    citations={citations}
-                    summaryStats={summaryStats}
-                    expandedIdx={expandedIdx}
-                    setExpandedIdx={setExpandedIdx}
-                    handleVerifySingle={handleVerifySingle}
-                    isVerifying={isVerifying}
-                    sourceLabel={sourceLabel}
-                />}
-            </div>
-        );
-    }
-
-    // ===== Case selected — full interface =====
+    // ===== Full interface (works with or without a case) =====
     return (
         <div className="page">
             <div className="page-header">
                 <h1>Citation Audit</h1>
                 <p>
-                    <strong style={{ color: 'var(--primary)' }}>{caseName}</strong> —
-                    Scan your case documents for legal citations associated with this case and verify each one resolves to a real judgment
-                    on BAILII or the National Archives.
+                    {caseName ? (
+                        <>
+                            <strong style={{ color: 'var(--primary)' }}>{caseName}</strong> —
+                            Scan your case documents for legal citations and verify each one resolves to a real judgment
+                            on BAILII or the National Archives.
+                        </>
+                    ) : (
+                        <>
+                            Verify legal citations in your documents against BAILII and Find Case Law.
+                            Drop files, browse, or paste text below.
+                        </>
+                    )}
                 </p>
             </div>
 
-            {/* Disclaimer */}
+            {/* AI Hallucination Warning & Tool Rationale */}
+            <div
+                style={{
+                    background: '#fef2f2', border: '1px solid #fca5a5',
+                    borderRadius: 'var(--radius-lg)', padding: 'var(--space-4) var(--space-5)',
+                    marginBottom: 'var(--space-4)', fontSize: '0.8rem', color: '#991b1b', lineHeight: 1.7,
+                }}
+            >
+                <strong style={{ fontSize: '0.85rem' }}>Why citation verification matters</strong>
+                <p style={{ margin: '0.5rem 0 0.5rem' }}>
+                    Large language models routinely fabricate legal citations — a phenomenon known as
+                    "hallucination". In <em>Harber v Commissioners for HMRC</em> [2023], the Tribunal noted
+                    that AI-generated submissions contained entirely fictitious case references.
+                    In <em>Ayinde v Leidos (Lockheed Martin)</em> [2024] EAT, the Employment Appeal Tribunal
+                    considered submissions containing AI-fabricated authorities and emphasised the duty on
+                    parties and representatives to verify every citation before relying on it.
+                </p>
+                <p style={{ margin: '0 0 0.5rem' }}>
+                    Research by Matthew Lee categorised AI hallucinations into several types: <strong>wholly
+                    fabricated cases</strong> (the case does not exist at all), <strong>incorrect citations</strong> (a
+                    real case cited with the wrong neutral citation or report reference), <strong>misattributed
+                    propositions</strong> (a real case cited for a principle it does not establish), and <strong>hybrid
+                    fabrications</strong> (real party names combined with invented procedural history or
+                    holdings).
+                </p>
+                <p style={{ margin: '0 0 0.5rem' }}>
+                    <strong>This tool addresses the first two categories</strong> — it checks whether each citation
+                    resolves to a real judgment on BAILII or the National Archives (Find Case Law). Because
+                    the check is against authoritative databases rather than AI, it is fast, deterministic,
+                    and reliable. It catches wholly fabricated cases and incorrect citations in seconds.
+                </p>
+                <p style={{ margin: 0, color: '#b45309' }}>
+                    <strong>We are actively developing advanced methods</strong> to detect the remaining,
+                    more subtle hallucination categories — including misattributed propositions and hybrid
+                    fabrications — by cross-referencing cited principles against judgment text. These
+                    features will be added in a future update.
+                </p>
+            </div>
+
+            {/* Operational disclaimer */}
             <div
                 style={{
                     background: 'var(--disclaimer-bg)', border: '1px solid var(--disclaimer-border)',
@@ -325,9 +309,9 @@ export default function CitationAudit() {
                     marginBottom: 'var(--space-4)', fontSize: '0.8rem', color: 'var(--disclaimer-text)', lineHeight: 1.6,
                 }}
             >
-                <strong>⚠ Important:</strong> Verification checks whether a citation resolves to a real case on
-                BAILII or the National Archives. It does <strong>not</strong> confirm that the case says what is
-                claimed, or that it is correctly applied. Always read the source judgment.
+                <strong>Verification scope:</strong> This tool checks whether a citation resolves to a real case on
+                BAILII or the National Archives. It does <strong>not</strong> currently confirm that the case says what is
+                claimed, or that it is correctly applied. Always read the source judgment yourself.
             </div>
 
             {/* Source selection */}
@@ -336,8 +320,8 @@ export default function CitationAudit() {
                     Select sources to scan
                 </h3>
 
-                {/* Case documents */}
-                {docsWithText.length > 0 && (
+                {/* Case documents (only when a case is selected) */}
+                {caseName && docsWithText.length > 0 && (
                     <div style={{ marginBottom: 'var(--space-4)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
                             <span style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-light)' }}>
@@ -379,7 +363,7 @@ export default function CitationAudit() {
                                     {doc.description && (
                                         <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>— {doc.description}</span>
                                     )}
-                                    <span style={{ fontSize: '0.65rem', color: 'var(--text-light)', marginLeft: 'auto' }}>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginLeft: 'auto' }}>
                                         {Math.round((doc.extracted_text?.length || 0) / 100) / 10}k chars
                                     </span>
                                 </label>
@@ -388,14 +372,14 @@ export default function CitationAudit() {
                     </div>
                 )}
 
-                {docsWithText.length === 0 && documents.length > 0 && (
+                {caseName && docsWithText.length === 0 && documents.length > 0 && (
                     <div style={{ padding: 'var(--space-3)', background: 'var(--amber-bg)', borderRadius: 'var(--radius)', marginBottom: 'var(--space-3)', fontSize: '0.8rem', color: 'var(--amber)' }}>
                         Your case has {documents.length} document{documents.length !== 1 ? 's' : ''} but none have extracted text.
                         Go to <Link to="/documents" style={{ color: 'var(--amber)', fontWeight: 600 }}>Documents</Link> and re-upload to extract text.
                     </div>
                 )}
 
-                {documents.length === 0 && (
+                {caseName && documents.length === 0 && (
                     <div style={{ padding: 'var(--space-3)', background: '#f1f5f9', borderRadius: 'var(--radius)', marginBottom: 'var(--space-3)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                         No documents uploaded yet. <Link to="/documents">Add documents</Link> to your case, or use the options below.
                     </div>
@@ -508,7 +492,7 @@ export default function CitationAudit() {
                             className="btn btn-primary"
                             onClick={handleVerifyAll}
                             disabled={isVerifying}
-                            style={{ background: '#0f766e', borderColor: '#0f766e' }}
+                            style={{ background: 'var(--accent-hover)', borderColor: 'var(--accent-hover)' }}
                         >
                             {isVerifying
                                 ? `Verifying (${progress.current}/${progress.total})…`
@@ -852,7 +836,7 @@ function CitationCard({
                                                 </span>
                                                 {indirect && (
                                                     <span style={{
-                                                        fontSize: '0.65rem', color: 'var(--amber)',
+                                                        fontSize: '0.75rem', color: 'var(--amber)',
                                                         padding: '1px 5px', background: 'var(--amber-bg)',
                                                         borderRadius: '3px', fontWeight: 500,
                                                     }}>
@@ -873,7 +857,7 @@ function CitationCard({
                                                 <button
                                                     className="btn btn-secondary"
                                                     style={{
-                                                        fontSize: '0.65rem', padding: '1px 6px',
+                                                        fontSize: '0.75rem', padding: '1px 6px',
                                                         minWidth: 'auto', opacity: downloading === c.url ? 0.5 : 1,
                                                     }}
                                                     disabled={downloading !== null}

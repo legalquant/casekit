@@ -98,9 +98,28 @@ export default function ApiKeySetup() {
                 });
                 const text = response.content[0].type === 'text' ? response.content[0].text : 'OK';
                 setTestResult(`✓ Connection successful: ${text}`);
-            } else {
-                // For OpenAI and Gemini, just validate the key format for now
-                setTestResult(`✓ Key saved for ${currentProvider.name}. Connection testing for this provider will be available when AI features are fully enabled.`);
+            } else if (provider === 'openai') {
+                const res = await fetch('https://api.openai.com/v1/models', {
+                    headers: { 'Authorization': `Bearer ${key}` },
+                });
+                if (res.ok) {
+                    setTestResult(`✓ Connection successful — OpenAI key is valid.`);
+                } else if (res.status === 401) {
+                    throw { status: 401 };
+                } else {
+                    setTestResult(`⚠ OpenAI responded with status ${res.status}. Key may still be valid.`);
+                }
+            } else if (provider === 'gemini') {
+                const res = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`
+                );
+                if (res.ok) {
+                    setTestResult(`✓ Connection successful — Gemini key is valid.`);
+                } else if (res.status === 400 || res.status === 403) {
+                    throw { status: 401, message: 'Invalid API key' };
+                } else {
+                    setTestResult(`⚠ Google responded with status ${res.status}. Key may still be valid.`);
+                }
             }
         } catch (e: any) {
             if (e.status === 401) {
@@ -116,11 +135,11 @@ export default function ApiKeySetup() {
     };
 
     return (
-        <div style={{ maxWidth: 600, margin: '0 auto' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '0.5rem' }}>
+        <div className="page">
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '0.5rem' }}>
                 API Key Setup
             </h1>
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
                 Set up your own AI connection to enable merits analysis, letter drafting, and response review.
                 Your key is stored on your computer only and never shared with anyone.
             </p>
@@ -169,7 +188,7 @@ export default function ApiKeySetup() {
                             <li><strong>You're in control</strong> — you can set a spending limit on your account, and you'll always see exactly what CaseKit is sending before it's sent</li>
                             <li><strong>More private</strong> — your data goes straight from your computer to the AI provider. No middleman, no third-party server</li>
                         </ul>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
                             For comparison: a ChatGPT subscription costs £20/month whether you use it or not.
                             With an API key, reviewing an entire case in CaseKit costs roughly 25p.
                             <Link to="/pricing" style={{ marginLeft: '0.5rem', fontWeight: 500 }}>See full pricing →</Link>
@@ -179,7 +198,7 @@ export default function ApiKeySetup() {
                     {/* Provider selector */}
                     <div className="card">
                         <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>Choose your AI provider</h2>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
                             All three providers offer high-quality AI. Anthropic (Claude) is recommended for legal analysis.
                         </p>
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -191,7 +210,7 @@ export default function ApiKeySetup() {
                                         flex: 1,
                                         minWidth: '140px',
                                         padding: '0.625rem 0.75rem',
-                                        border: provider === p.id ? '2px solid var(--accent)' : '1px solid var(--color-border)',
+                                        border: provider === p.id ? '2px solid var(--accent)' : '1px solid var(--border)',
                                         borderRadius: '0.375rem',
                                         background: provider === p.id ? 'var(--accent-bg, #f0fdfa)' : 'white',
                                         cursor: 'pointer',
@@ -201,7 +220,7 @@ export default function ApiKeySetup() {
                                 >
                                     <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{p.name}</div>
                                     {p.recommended && (
-                                        <span style={{ fontSize: '0.65rem', color: 'var(--green)', fontWeight: 500 }}>Recommended</span>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--green)', fontWeight: 500 }}>Recommended</span>
                                     )}
                                 </button>
                             ))}
@@ -213,7 +232,7 @@ export default function ApiKeySetup() {
                         <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
                             How to get your {currentProvider.name} key
                         </h2>
-                        <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--color-text-muted)' }}>
+                        <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>
                             This takes about 2 minutes. You'll need an email address and a payment method.
                         </p>
                         <ol style={{ paddingLeft: '1.25rem', fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
@@ -222,7 +241,7 @@ export default function ApiKeySetup() {
                                     {s.linkUrl ? (
                                         <>
                                             {s.text}{' '}
-                                            <a href={s.linkUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>
+                                            <a href={s.linkUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>
                                                 {s.linkLabel}
                                             </a>
                                         </>
@@ -232,13 +251,13 @@ export default function ApiKeySetup() {
                                 </li>
                             ))}
                         </ol>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
                             Tip: set a spending limit in your account settings to cap your costs.
                         </p>
                     </div>
 
                     {/* Security guidance */}
-                    <div className="card" style={{ borderColor: 'var(--color-warning)', borderWidth: '1px' }}>
+                    <div className="card" style={{ borderColor: 'var(--amber)', borderWidth: '1px' }}>
                         <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>Keep your API key safe</h2>
                         <ul style={{ paddingLeft: '1.25rem', fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
                             <li><strong>Treat your API key like a password.</strong> Anyone who has it can make API calls billed to your account.</li>
@@ -271,7 +290,7 @@ export default function ApiKeySetup() {
                                 )}
                             </div>
                         </div>
-                        <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
                             Your key is stored in your browser's local storage on this computer only. It is never written to any file or sent to any server other than the provider's API endpoint.
                         </p>
                     </div>

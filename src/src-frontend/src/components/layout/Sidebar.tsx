@@ -1,5 +1,5 @@
-import { NavLink } from 'react-router-dom';
-import { useEffect } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useCaseStore } from '../../hooks/useCase';
 
 const NAV_SECTIONS_INFO = [
@@ -14,11 +14,12 @@ const NAV_SECTIONS_INFO = [
 ];
 
 const NAV_SECTIONS_CASE = [
-    { to: '/cases', label: 'Case Overview' },
+    { to: '/cases', label: 'Case Overview', alwaysEnabled: true },
     { to: '/documents', label: 'Documents' },
-    { to: '/how-to-save-emails', label: 'How to Save Emails' },
+    { to: '/how-to-save-emails', label: 'How to Save Emails', alwaysEnabled: true },
     { to: '/chronology', label: 'Chronology' },
-    { to: '/templates', label: 'Templates & Forms' },
+    { to: '/ai-review', label: 'AI Drafting' },
+    { to: '/templates', label: 'Templates & Forms', alwaysEnabled: true },
     { to: '/export', label: 'Export Bundle' },
 ];
 
@@ -29,18 +30,15 @@ const NAV_SECTIONS_RESEARCH = [
 const NAV_SECTIONS_AI = [
     { to: '/your-data', label: 'Your Data & AI' },
     { to: '/api-setup', label: 'API Key Setup' },
-    { to: '/ai-review', label: 'AI Drafting' },
 ];
 
 export default function Sidebar() {
     const cases = useCaseStore((s) => s.cases);
     const currentCase = useCaseStore((s) => s.currentCase);
     const selectCase = useCaseStore((s) => s.selectCase);
-    const loadCases = useCaseStore((s) => s.loadCases);
-
-    useEffect(() => {
-        loadCases();
-    }, []);
+    const clearCurrentCase = useCaseStore((s) => s.clearCurrentCase);
+    const navigate = useNavigate();
+    const [hoveredLink, setHoveredLink] = useState<string | null>(null);
 
     const handleCaseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const name = e.target.value;
@@ -49,23 +47,41 @@ export default function Sidebar() {
         }
     };
 
-    const linkStyle = (isActive: boolean, highlight?: boolean) => ({
+    const handleNewCase = () => {
+        clearCurrentCase();
+        navigate('/cases?new=1');
+    };
+
+    const linkStyle = (isActive: boolean, to: string, options?: { highlight?: boolean; disabled?: boolean }) => ({
         display: 'block' as const,
         padding: '6px 20px',
         fontSize: '0.8rem',
         fontWeight: isActive ? 500 : 400,
-        color: isActive ? '#ffffff' : highlight ? '#fbbf24' : '#94a3b8',
-        background: isActive ? 'rgba(14, 165, 152, 0.15)' : 'transparent',
+        color: options?.disabled
+            ? '#334155'
+            : isActive
+                ? '#ffffff'
+                : options?.highlight
+                    ? '#fbbf24'
+                    : '#94a3b8',
+        background: isActive
+            ? 'rgba(14, 165, 152, 0.15)'
+            : hoveredLink === to && !options?.disabled
+                ? 'rgba(255, 255, 255, 0.04)'
+                : 'transparent',
         borderRight: isActive ? '2px solid var(--accent)' : '2px solid transparent',
         textDecoration: 'none' as const,
         transition: 'all 0.1s ease',
         lineHeight: 1.6,
+        opacity: options?.disabled ? 0.35 : 1,
+        cursor: options?.disabled ? 'default' : 'pointer',
+        pointerEvents: options?.disabled ? 'none' as const : 'auto' as const,
     });
 
     const sectionHeader = (label: string) => (
         <div
             style={{
-                fontSize: '0.6rem',
+                fontSize: '0.75rem',
                 fontWeight: 600,
                 textTransform: 'uppercase' as const,
                 letterSpacing: '0.08em',
@@ -125,7 +141,9 @@ export default function Sidebar() {
                             key={item.to}
                             to={item.to}
                             end={item.to === '/'}
-                            style={({ isActive }) => linkStyle(isActive, item.highlight)}
+                            style={({ isActive }) => linkStyle(isActive, item.to, { highlight: item.highlight })}
+                            onMouseEnter={() => setHoveredLink(item.to)}
+                            onMouseLeave={() => setHoveredLink(null)}
                         >
                             {item.label}
                         </NavLink>
@@ -136,13 +154,14 @@ export default function Sidebar() {
                 <div style={{ marginBottom: '4px' }}>
                     {sectionHeader('My Cases')}
 
-                    {/* Case selector dropdown */}
-                    <div style={{ padding: '4px 16px 8px' }}>
+                    {/* Case selector dropdown + New button */}
+                    <div style={{ padding: '4px 16px 8px', display: 'flex', gap: '4px', alignItems: 'center' }}>
                         <select
                             value={currentCase?.name || ''}
                             onChange={handleCaseChange}
                             style={{
-                                width: '100%',
+                                flex: 1,
+                                minWidth: 0,
                                 padding: '5px 8px',
                                 fontSize: '0.75rem',
                                 background: '#1e293b',
@@ -154,7 +173,7 @@ export default function Sidebar() {
                             }}
                         >
                             <option value="" disabled>
-                                {cases.length === 0 ? 'No cases yet' : 'Select a case…'}
+                                {cases.length === 0 ? 'No cases yet' : 'Select a case\u2026'}
                             </option>
                             {cases.map((c) => (
                                 <option key={c.name} value={c.name}>
@@ -162,18 +181,50 @@ export default function Sidebar() {
                                 </option>
                             ))}
                         </select>
+                        <button
+                            onClick={handleNewCase}
+                            title="Create new case"
+                            style={{
+                                flexShrink: 0,
+                                padding: '4px 8px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                background: 'var(--accent)',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                lineHeight: 1.4,
+                            }}
+                        >
+                            + New
+                        </button>
                     </div>
 
-                    {NAV_SECTIONS_CASE.map((item) => (
-                        <NavLink
-                            key={item.to}
-                            to={item.to}
-                            end={item.to === '/cases'}
-                            style={({ isActive }) => linkStyle(isActive)}
-                        >
-                            {item.label}
-                        </NavLink>
-                    ))}
+                    {NAV_SECTIONS_CASE.map((item) => {
+                        const needsCase = !item.alwaysEnabled;
+                        const disabled = needsCase && !currentCase;
+                        return disabled ? (
+                            <span
+                                key={item.to}
+                                style={linkStyle(false, item.to, { disabled: true })}
+                                title="Select a case first"
+                            >
+                                {item.label}
+                            </span>
+                        ) : (
+                            <NavLink
+                                key={item.to}
+                                to={item.to}
+                                end={item.to === '/cases'}
+                                style={({ isActive }) => linkStyle(isActive, item.to)}
+                                onMouseEnter={() => setHoveredLink(item.to)}
+                                onMouseLeave={() => setHoveredLink(null)}
+                            >
+                                {item.label}
+                            </NavLink>
+                        );
+                    })}
                 </div>
 
                 {/* Legal Research section */}
@@ -183,7 +234,9 @@ export default function Sidebar() {
                         <NavLink
                             key={item.to}
                             to={item.to}
-                            style={({ isActive }) => linkStyle(isActive)}
+                            style={({ isActive }) => linkStyle(isActive, item.to)}
+                            onMouseEnter={() => setHoveredLink(item.to)}
+                            onMouseLeave={() => setHoveredLink(null)}
                         >
                             {item.label}
                         </NavLink>
@@ -197,7 +250,9 @@ export default function Sidebar() {
                         <NavLink
                             key={item.to}
                             to={item.to}
-                            style={({ isActive }) => linkStyle(isActive)}
+                            style={({ isActive }) => linkStyle(isActive, item.to)}
+                            onMouseEnter={() => setHoveredLink(item.to)}
+                            onMouseLeave={() => setHoveredLink(null)}
                         >
                             {item.label}
                         </NavLink>
@@ -210,7 +265,7 @@ export default function Sidebar() {
                 style={{
                     padding: '12px 20px',
                     borderTop: '1px solid rgba(255,255,255,0.06)',
-                    fontSize: '0.6rem',
+                    fontSize: '0.75rem',
                     color: '#475569',
                     lineHeight: 1.5,
                 }}

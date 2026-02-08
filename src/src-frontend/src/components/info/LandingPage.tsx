@@ -1,15 +1,20 @@
 import { Link } from 'react-router-dom';
+import { useCaseStore } from '../../hooks/useCase';
 
-const FEATURES = [
+const CASE_FEATURES = [
     { label: 'Document Management', desc: 'Upload, organise, and tag your documents by category — correspondence, evidence, legal, court', path: '/documents' },
     { label: 'Chronology Builder', desc: 'Build a timeline of events from your documents and case details, with AI-assisted date extraction', path: '/chronology' },
-    { label: 'AI Merits Analysis', desc: 'Get a structured assessment of your position using your own API key — transparent, not a chatbot. Set up in API Key Setup.', path: '/ai-review' },
+    { label: 'AI Drafting', desc: 'Draft pre-action letters, analyse case merits, and prepare court documents with AI — using your own API key', path: '/ai-review' },
     { label: 'Templates & Forms', desc: 'Pre-action letter templates, complaint templates, and official HMCTS court forms with guidance', path: '/templates' },
     { label: 'Procedural Guide', desc: 'Step-by-step walkthrough from first complaint to enforcement, with court form links', path: '/procedure' },
     { label: 'Court Bundle Export', desc: 'Export your case as a paginated, indexed bundle ready for court or a solicitor', path: '/export' },
 ];
 
 export default function LandingPage() {
+    const cases = useCaseStore((s) => s.cases);
+    const currentCase = useCaseStore((s) => s.currentCase);
+    const selectCase = useCaseStore((s) => s.selectCase);
+
     return (
         <div className="page">
             <div
@@ -53,10 +58,54 @@ export default function LandingPage() {
                 </div>
             </div>
 
+            <div style={{
+                background: currentCase ? 'rgba(14, 165, 152, 0.08)' : '#f8fafc',
+                border: `1px solid ${currentCase ? 'rgba(14, 165, 152, 0.25)' : 'var(--border)'}`,
+                borderRadius: '0.5rem',
+                padding: '0.75rem 1rem',
+                marginBottom: 'var(--space-4)',
+                fontSize: '0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                flexWrap: 'wrap',
+            }}>
+                <span style={{ fontWeight: 500, color: currentCase ? 'var(--text)' : 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                    {currentCase ? 'Current case:' : 'Select a case:'}
+                </span>
+                <select
+                    value={currentCase?.name || ''}
+                    onChange={(e) => { if (e.target.value) selectCase(e.target.value); }}
+                    style={{
+                        flex: 1,
+                        minWidth: 160,
+                        padding: '5px 8px',
+                        fontSize: '0.85rem',
+                        border: '1px solid var(--border)',
+                        borderRadius: '4px',
+                        background: 'white',
+                        cursor: 'pointer',
+                    }}
+                >
+                    <option value="" disabled>
+                        {cases.length === 0 ? 'No cases yet' : 'Choose a case\u2026'}
+                    </option>
+                    {cases.map((c) => (
+                        <option key={c.name} value={c.name}>{c.name}</option>
+                    ))}
+                </select>
+                <Link to="/cases?new=1" className="btn btn-primary" style={{ fontSize: '0.8rem', padding: '5px 12px', whiteSpace: 'nowrap' }}>
+                    + New Case
+                </Link>
+                {currentCase && (
+                    <Link to="/cases" style={{ fontSize: '0.8rem', fontWeight: 500, whiteSpace: 'nowrap' }}>View case</Link>
+                )}
+            </div>
+
             <div className="resource-grid" style={{ marginBottom: 'var(--space-8)' }}>
-                {FEATURES.map((item) => (
-                    <Link key={item.path} to={item.path} style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <div className="card card-interactive" style={{ height: '100%' }}>
+                {CASE_FEATURES.map((item) => (
+                    <Link key={item.path} to={currentCase ? item.path : '/cases'} style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <div className="card card-interactive" style={{ height: '100%', opacity: currentCase ? 1 : 0.7 }}>
                             <h3 style={{ fontSize: '0.95rem', marginBottom: 'var(--space-1)' }}>{item.label}</h3>
                             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>{item.desc}</p>
                         </div>

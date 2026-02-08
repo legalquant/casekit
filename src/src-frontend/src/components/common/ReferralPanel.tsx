@@ -61,11 +61,11 @@ export default function ReferralPanel() {
     ];
 
     return (
-        <div style={{ maxWidth: 800, margin: '0 auto' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '0.5rem' }}>
+        <div className="page">
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '0.5rem' }}>
                 Find Professional Help
             </h1>
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
                 Some cases benefit from professional legal advice. Here are resources available in England &amp; Wales.
             </p>
 
@@ -112,11 +112,11 @@ export default function ReferralPanel() {
                                                     href={provider.url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--color-accent)' }}
+                                                    style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--accent)' }}
                                                 >
                                                     {provider.name} ↗
                                                 </a>
-                                                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+                                                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
                                                     {provider.description}
                                                 </p>
                                             </div>
@@ -126,7 +126,7 @@ export default function ReferralPanel() {
                             </div>
                         ) : (
                             <div className="card" style={{ padding: '1rem', background: '#f7fafc' }}>
-                                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                                     This tier is planned for a future update.
                                 </p>
                             </div>
@@ -138,11 +138,11 @@ export default function ReferralPanel() {
             <div
                 style={{
                     background: '#f7fafc',
-                    border: '1px solid var(--color-border)',
+                    border: '1px solid var(--border)',
                     borderRadius: '0.375rem',
                     padding: '0.75rem',
                     fontSize: '0.75rem',
-                    color: 'var(--color-text-muted)',
+                    color: 'var(--text-muted)',
                 }}
             >
                 Inclusion in this list does not constitute endorsement. Conduct your own due diligence before instructing any

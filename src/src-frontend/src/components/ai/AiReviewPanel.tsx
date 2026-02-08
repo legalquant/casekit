@@ -17,36 +17,45 @@ const ALL_ANALYSIS_TYPES: { type: AiCallType; label: string; desc: string; roles
 
 const NEEDS_INSTRUCTIONS: AiCallType[] = ['pre_action_letter', 'response_to_letter', 'particulars_draft', 'defence_draft'];
 
-/* ─── Model options with pricing (as at February 2026 — verify at provider sites) ─── */
+/* ─── Model options with pricing (verify at provider sites — prices change) ─── */
 const MODEL_OPTIONS: { id: string; label: string; provider: string; inputPer1M: number; outputPer1M: number; note?: string }[] = [
-    // Anthropic
+    // Anthropic — https://docs.anthropic.com/en/about-claude/pricing
+    { id: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5', provider: 'anthropic', inputPer1M: 3, outputPer1M: 15, note: 'Recommended' },
     { id: 'claude-opus-4-6', label: 'Claude Opus 4.6', provider: 'anthropic', inputPer1M: 5, outputPer1M: 25, note: 'Most capable' },
-    { id: 'claude-sonnet-5-20260203', label: 'Claude Sonnet 5', provider: 'anthropic', inputPer1M: 3, outputPer1M: 15, note: 'Recommended' },
-    { id: 'claude-sonnet-4-5-20250929', label: 'Claude Sonnet 4.5', provider: 'anthropic', inputPer1M: 3, outputPer1M: 15 },
-    { id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5', provider: 'anthropic', inputPer1M: 1, outputPer1M: 5, note: 'Fast, cheapest Anthropic' },
-    // OpenAI
-    { id: 'gpt-5.2', label: 'GPT-5.2', provider: 'openai', inputPer1M: 1.75, outputPer1M: 14, note: 'Latest OpenAI' },
-    { id: 'o3', label: 'o3 (reasoning)', provider: 'openai', inputPer1M: 2, outputPer1M: 8, note: 'Advanced reasoning' },
+    { id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5', provider: 'anthropic', inputPer1M: 1, outputPer1M: 5, note: 'Fast, cheapest' },
+    // OpenAI — https://platform.openai.com/docs/pricing
+    { id: 'gpt-5.2', label: 'GPT-5.2', provider: 'openai', inputPer1M: 1.75, outputPer1M: 14, note: 'Most capable OpenAI' },
+    { id: 'gpt-5', label: 'GPT-5', provider: 'openai', inputPer1M: 1.25, outputPer1M: 10 },
+    { id: 'gpt-5-mini', label: 'GPT-5 Mini', provider: 'openai', inputPer1M: 0.25, outputPer1M: 2, note: 'Fast, cheap' },
+    { id: 'o3', label: 'o3 (reasoning)', provider: 'openai', inputPer1M: 2, outputPer1M: 8, note: 'Reasoning' },
     { id: 'o4-mini', label: 'o4-mini (reasoning)', provider: 'openai', inputPer1M: 1.10, outputPer1M: 4.40, note: 'Fast reasoning' },
-    // Google
+    // Google — https://ai.google.dev/gemini-api/docs/pricing
     { id: 'gemini-3-pro-preview', label: 'Gemini 3 Pro', provider: 'gemini', inputPer1M: 2, outputPer1M: 12, note: 'Most capable Google' },
-    { id: 'gemini-3-flash-preview', label: 'Gemini 3 Flash', provider: 'gemini', inputPer1M: 0.50, outputPer1M: 3, note: 'Cheapest Google' },
+    { id: 'gemini-3-flash-preview', label: 'Gemini 3 Flash', provider: 'gemini', inputPer1M: 0.50, outputPer1M: 3, note: 'Fast' },
+    { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', provider: 'gemini', inputPer1M: 1.25, outputPer1M: 10 },
+    { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'gemini', inputPer1M: 0.30, outputPer1M: 2.50, note: 'Cheapest' },
 ];
-const DEFAULT_MODEL = 'claude-sonnet-5-20260203';
+
+/* Default model per provider */
+const DEFAULT_MODELS: Record<string, string> = {
+    anthropic: 'claude-sonnet-4-5',
+    openai: 'gpt-5.2',
+    gemini: 'gemini-3-pro-preview',
+};
 
 /* ─── Automatic PII redaction patterns ─── */
 function autoRedact(text: string): string {
     return text
-        // UK mobile & landline numbers
+        // UK mobile & landline numbers (require leading +44 or 0, with typical length)
         .replace(/(?:\+44|0)\s*[1-9]\d{1,4}[\s.-]?\d{3,4}[\s.-]?\d{3,4}/g, '[PHONE REDACTED]')
         // Email addresses
         .replace(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g, '[EMAIL REDACTED]')
-        // National Insurance numbers
-        .replace(/[A-Z]{2}\s*\d{2}\s*\d{2}\s*\d{2}\s*[A-D]/gi, '[NI NUMBER REDACTED]')
-        // UK sort codes (xx-xx-xx)
-        .replace(/\b\d{2}[\s-]\d{2}[\s-]\d{2}\b/g, '[SORT CODE REDACTED]')
-        // Bank account numbers (8 digits)
-        .replace(/\b\d{8}\b/g, '[ACCOUNT NO. REDACTED]')
+        // National Insurance numbers (e.g. AB 12 34 56 C)
+        .replace(/\b[A-Z]{2}\s*\d{2}\s*\d{2}\s*\d{2}\s*[A-D]\b/gi, '[NI NUMBER REDACTED]')
+        // UK sort codes — require context keywords nearby to avoid matching dates
+        .replace(/(?:sort\s*code|s\/c|sc)[:\s]*\d{2}[\s-]\d{2}[\s-]\d{2}/gi, '[SORT CODE REDACTED]')
+        // Bank account numbers — require context keywords nearby to avoid matching reference numbers
+        .replace(/(?:account\s*(?:no\.?|number|num|#)|a\/c)[:\s]*\d{6,8}/gi, '[ACCOUNT NO. REDACTED]')
         // Dates of birth patterns (DOB: dd/mm/yyyy etc)
         .replace(/\b(?:DOB|Date of Birth|D\.O\.B)[:\s]+\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}/gi, '[DOB REDACTED]');
 }
@@ -210,19 +219,28 @@ Insert [USER TO CONFIRM: ...] for any facts not in the documents. Output only th
 export default function AiReviewPanel() {
     const [savedMsg, setSavedMsg] = useState('');
     const hasApiKey = !!localStorage.getItem('casekit_api_key');
+    const cases = useCaseStore((s) => s.cases);
     const currentCase = useCaseStore((s) => s.currentCase);
+    const selectCase = useCaseStore((s) => s.selectCase);
+    const clearCurrentCase = useCaseStore((s) => s.clearCurrentCase);
     const documents = useCaseStore((s) => s.documents);
     const chronology = useCaseStore((s) => s.chronology);
 
+    // Cases are loaded centrally in AppShell — no redundant load here
+
     const userRole: UserRole = currentCase?.user_role || 'claimant';
     const availableTypes = ALL_ANALYSIS_TYPES.filter((t) => t.roles.includes(userRole));
+
+    const storedProvider = localStorage.getItem('casekit_api_provider') || 'anthropic';
+    const providerModels = MODEL_OPTIONS.filter((m) => m.provider === storedProvider);
+    const defaultModel = DEFAULT_MODELS[storedProvider] || providerModels[0]?.id || MODEL_OPTIONS[0].id;
 
     const [selectedType, setSelectedType] = useState<AiCallType | null>(null);
     const [userQuestion, setUserQuestion] = useState('');
     const [loading, setLoading] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [selectedDocs, setSelectedDocs] = useState<Set<string>>(new Set());
-    const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL);
+    const [selectedModel, setSelectedModel] = useState(defaultModel);
     const [result, setResult] = useState<AiCallRecord | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -318,10 +336,15 @@ export default function AiReviewPanel() {
                 outputTokens = response.usage.output_tokens;
             } else if (chosenProvider === 'openai') {
                 model = selectedModel;
+                const body: Record<string, unknown> = { model, max_tokens: 4096, messages: [{ role: 'user', content: prompt }] };
+                // Force JSON output for merits assessment
+                if (selectedType === 'merits_assessment') {
+                    body.response_format = { type: 'json_object' };
+                }
                 const res = await fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-                    body: JSON.stringify({ model, max_tokens: 4096, messages: [{ role: 'user', content: prompt }] }),
+                    body: JSON.stringify(body),
                 });
                 if (!res.ok) { const err = await res.text(); throw new Error(`OpenAI error: ${err}`); }
                 const data = await res.json();
@@ -330,12 +353,17 @@ export default function AiReviewPanel() {
                 outputTokens = data.usage?.completion_tokens || 0;
             } else if (chosenProvider === 'gemini') {
                 model = selectedModel;
+                const genConfig: Record<string, unknown> = { maxOutputTokens: 4096 };
+                // Force JSON output for merits assessment
+                if (selectedType === 'merits_assessment') {
+                    genConfig.responseMimeType = 'application/json';
+                }
                 const res = await fetch(
                     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
                     {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 4096 } }),
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: genConfig }),
                     },
                 );
                 if (!res.ok) { const err = await res.text(); throw new Error(`Gemini error: ${err}`); }
@@ -435,7 +463,7 @@ export default function AiReviewPanel() {
     const estimatedInputTokens = Math.ceil(totalChars / 4) + 2000;
     const estimatedOutputTokens = 2000;
 
-    const modelConfig = MODEL_OPTIONS.find((m) => m.id === selectedModel) || MODEL_OPTIONS[1];
+    const modelConfig = MODEL_OPTIONS.find((m) => m.id === selectedModel) || MODEL_OPTIONS[0];
     const estimatedCost = () => {
         const inputCost = (estimatedInputTokens / 1_000_000) * modelConfig.inputPer1M;
         const outputCost = (estimatedOutputTokens / 1_000_000) * modelConfig.outputPer1M;
@@ -481,11 +509,11 @@ export default function AiReviewPanel() {
     };
 
     return (
-        <div style={{ maxWidth: 800, margin: '0 auto' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '0.5rem' }}>
+        <div className="page">
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '0.5rem' }}>
                 AI Drafting
             </h1>
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
                 AI-assisted analysis and document drafting using your own API key.
                 <Link to="/api-setup" style={{ marginLeft: '0.5rem', fontWeight: 500 }}>Manage key</Link>
                 {currentCase && (
@@ -498,7 +526,7 @@ export default function AiReviewPanel() {
             {/* Methodology explanation */}
             <div style={{
                 background: '#f8fafc',
-                border: '1px solid var(--color-border)',
+                border: '1px solid var(--border)',
                 borderRadius: '0.5rem',
                 padding: '0.875rem 1.25rem',
                 marginBottom: '1.5rem',
@@ -536,24 +564,72 @@ export default function AiReviewPanel() {
                 </ul>
             </div>
 
+            {/* Case selector bar */}
+            <div style={{
+                background: currentCase ? 'rgba(14, 165, 152, 0.08)' : '#f8fafc',
+                border: `1px solid ${currentCase ? 'rgba(14, 165, 152, 0.25)' : 'var(--border)'}`,
+                borderRadius: '0.5rem',
+                padding: '0.75rem 1rem',
+                marginBottom: '1.5rem',
+                fontSize: '0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                flexWrap: 'wrap',
+            }}>
+                <span style={{ fontWeight: 500, color: currentCase ? 'var(--text)' : 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                    {currentCase ? 'Current case:' : 'Select a case to begin:'}
+                </span>
+                <select
+                    value={currentCase?.name || ''}
+                    onChange={(e) => { if (e.target.value) selectCase(e.target.value); }}
+                    style={{
+                        flex: 1,
+                        minWidth: 160,
+                        padding: '5px 8px',
+                        fontSize: '0.85rem',
+                        border: '1px solid var(--border)',
+                        borderRadius: '4px',
+                        background: 'white',
+                        cursor: 'pointer',
+                    }}
+                >
+                    <option value="" disabled>
+                        {cases.length === 0 ? 'No cases yet' : 'Choose a case\u2026'}
+                    </option>
+                    {cases.map((c) => (
+                        <option key={c.name} value={c.name}>{c.name}</option>
+                    ))}
+                </select>
+                <Link
+                    to="/cases?new=1"
+                    className="btn btn-primary"
+                    style={{ fontSize: '0.8rem', padding: '5px 12px', whiteSpace: 'nowrap' }}
+                    onClick={() => clearCurrentCase()}
+                >
+                    + New Case
+                </Link>
+            </div>
+
             {!hasApiKey ? (
                 <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
                     <p style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.5rem' }}>API Key Required</p>
-                    <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginBottom: '1rem' }}>
-                        You need an API key to use AI review features. It takes about 2 minutes to set up.
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                        You need an API key to use AI drafting features. Set one up in API Key Setup.
                     </p>
                     <Link to="/api-setup" className="btn btn-primary">
                         Set up API Key
                     </Link>
-                    <p style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', marginTop: '0.75rem' }}>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.75rem' }}>
                         CaseKit has no internet connection by default. AI features are the only thing that sends data,
                         and only when you explicitly press "Analyse".
                     </p>
                 </div>
             ) : !currentCase ? (
                 <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
-                    <p style={{ color: 'var(--color-text-muted)' }}>
-                        Select a case first. <Link to="/cases">Go to cases</Link>
+                    <p style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.5rem' }}>No case selected</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                        Use the dropdown above to select an existing case, or create a new one to get started.
                     </p>
                 </div>
             ) : loading ? (
@@ -562,7 +638,7 @@ export default function AiReviewPanel() {
                     <p style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.75rem' }}>
                         Generating: {ALL_ANALYSIS_TYPES.find((t) => t.type === selectedType)?.label || selectedType}
                     </p>
-                    <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
                         Sending your case details and documents to the AI. This usually takes 15–45 seconds depending on the number of documents.
                     </p>
                     {/* Animated progress bar */}
@@ -590,7 +666,7 @@ export default function AiReviewPanel() {
                             100% { transform: translateX(-100%); width: 40%; }
                         }
                     `}</style>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                         Your data is sent directly to the API provider. Nothing is stored externally.
                     </p>
                 </div>
@@ -635,7 +711,7 @@ export default function AiReviewPanel() {
                                     {meritsData.legalFramework.map((lf, i) => (
                                         <div key={i} style={{ marginBottom: '0.5rem' }}>
                                             <p style={{ fontSize: '0.85rem', fontWeight: 500 }}>{lf.provision}</p>
-                                            <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{lf.application}</p>
+                                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{lf.application}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -647,7 +723,7 @@ export default function AiReviewPanel() {
                                     <h3 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem', color: '#1e40af' }}>Claimant Position</h3>
                                     {meritsData.claimantPosition.potentialCausesOfAction.length > 0 && (
                                         <div style={{ marginBottom: '0.5rem' }}>
-                                            <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Causes of Action</p>
+                                            <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Causes of Action</p>
                                             <ul style={{ paddingLeft: '1rem', fontSize: '0.85rem' }}>
                                                 {meritsData.claimantPosition.potentialCausesOfAction.map((c, i) => <li key={i}>{renderAnnotatedText(c)}</li>)}
                                             </ul>
@@ -675,7 +751,7 @@ export default function AiReviewPanel() {
                                     <h3 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem', color: '#92400e' }}>Defendant Position</h3>
                                     {meritsData.defendantPosition.potentialDefences.length > 0 && (
                                         <div style={{ marginBottom: '0.5rem' }}>
-                                            <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: '0.25rem' }}>Potential Defences</p>
+                                            <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Potential Defences</p>
                                             <ul style={{ paddingLeft: '1rem', fontSize: '0.85rem' }}>
                                                 {meritsData.defendantPosition.potentialDefences.map((d, i) => <li key={i}>{renderAnnotatedText(d)}</li>)}
                                             </ul>
@@ -708,7 +784,7 @@ export default function AiReviewPanel() {
                                     <p style={{ fontSize: '0.85rem' }}>Estimated expiry: <strong>{meritsData.limitationPeriod.expiryEstimate}</strong></p>
                                 )}
                                 {meritsData.limitationPeriod.notes && (
-                                    <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{meritsData.limitationPeriod.notes}</p>
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{meritsData.limitationPeriod.notes}</p>
                                 )}
                             </div>
 
@@ -718,7 +794,7 @@ export default function AiReviewPanel() {
                                 <p style={{ fontSize: '1rem', fontWeight: 600 }}>
                                     £{meritsData.quantumAnalysis.low.toLocaleString()} – £{meritsData.quantumAnalysis.high.toLocaleString()}
                                 </p>
-                                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{meritsData.quantumAnalysis.basis}</p>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{meritsData.quantumAnalysis.basis}</p>
                             </div>
 
                             {/* Procedural Considerations */}
@@ -757,7 +833,7 @@ export default function AiReviewPanel() {
                     )}
 
                     {/* Usage & cost */}
-                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'flex', gap: '1rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', gap: '1rem' }}>
                         <span>Model: {result.model}</span>
                         <span>Tokens: {result.inputTokens.toLocaleString()} in / {result.outputTokens.toLocaleString()} out</span>
                         <span>≈ £{((result.inputTokens * 0.003 + result.outputTokens * 0.015) / 1000).toFixed(3)}</span>
@@ -776,7 +852,7 @@ export default function AiReviewPanel() {
                         </div>
                     )}
 
-                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
                         ⚠ This is information only, not legal advice. All AI output should be reviewed carefully. Verify all statutory references. Seek professional advice for important decisions.
                     </div>
                 </div>
@@ -785,7 +861,7 @@ export default function AiReviewPanel() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div className="card">
                         <p style={{ fontWeight: 500, marginBottom: '0.5rem' }}>Select Analysis Type</p>
-                        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1rem' }}>
                             Tools available for your role as <strong>{userRole}</strong>.
                         </p>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
@@ -809,13 +885,13 @@ export default function AiReviewPanel() {
                                         textAlign: 'center',
                                         padding: '1rem',
                                         transition: 'border-color 0.15s, background 0.15s',
-                                        border: selectedType === item.type ? '2px solid var(--accent)' : '1px solid var(--color-border)',
+                                        border: selectedType === item.type ? '2px solid var(--accent)' : '1px solid var(--border)',
                                         background: selectedType === item.type ? '#f0fdfa' : 'white',
                                     }}
                                     aria-label={item.label}
                                 >
                                     <p style={{ fontWeight: 600, fontSize: '0.85rem' }}>{item.label}</p>
-                                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
                                         {item.desc}
                                     </p>
                                 </button>
@@ -830,7 +906,7 @@ export default function AiReviewPanel() {
                                 Confirm: {ALL_ANALYSIS_TYPES.find((t) => t.type === selectedType)?.label}
                             </h3>
 
-                            <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
                                 <p style={{ fontWeight: 600, marginBottom: '0.375rem' }}>Documents to include (review and edit text before sending):</p>
                                 {documents.length === 0 ? (
                                     <p style={{ color: '#991b1b' }}>No documents uploaded. Upload documents via the Documents tab first.</p>
@@ -870,7 +946,7 @@ export default function AiReviewPanel() {
                                                             {text.length.toLocaleString()} chars
                                                         </span>
                                                         {redactedCount > 0 && (
-                                                            <span style={{ fontSize: '0.65rem', color: '#b45309', background: '#fef3c7', padding: '1px 5px', borderRadius: 3 }}>
+                                                            <span style={{ fontSize: '0.75rem', color: '#b45309', background: '#fef3c7', padding: '1px 5px', borderRadius: 3 }}>
                                                                 {redactedCount} redacted
                                                             </span>
                                                         )}
@@ -879,7 +955,7 @@ export default function AiReviewPanel() {
                                                             onClick={(e) => { e.stopPropagation(); setExpandedDoc(isExpanded ? null : d.filename); }}
                                                             style={{
                                                                 background: 'none', border: 'none', cursor: 'pointer',
-                                                                fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 500,
+                                                                fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 500,
                                                                 padding: '2px 6px',
                                                             }}
                                                         >
@@ -924,7 +1000,7 @@ export default function AiReviewPanel() {
                                                                     background: '#fafafa',
                                                                 }}
                                                             />
-                                                            <p style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                                                            <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem' }}>
                                                                 Edit freely — remove or redact any text you do not want sent to the AI provider.
                                                                 This is the exact text that will be included in the prompt.
                                                             </p>
@@ -937,9 +1013,13 @@ export default function AiReviewPanel() {
                                 )}
 
                                 <div style={{ marginBottom: '0.5rem' }}>
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 500, display: 'block', marginBottom: 2 }}>Model</label>
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 500, display: 'block', marginBottom: 2 }}>
+                                        Model <span style={{ fontWeight: 400, color: '#94a3b8' }}>
+                                            ({storedProvider} key — <Link to="/api-setup" style={{ color: '#64748b' }}>change provider</Link>)
+                                        </span>
+                                    </label>
                                     <select className="input" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} style={{ width: '100%' }}>
-                                        {MODEL_OPTIONS.map((m) => (
+                                        {providerModels.map((m) => (
                                             <option key={m.id} value={m.id}>
                                                 {m.label}{m.note ? ` — ${m.note}` : ''} (${m.inputPer1M}/Mtok in, ${m.outputPer1M}/Mtok out)
                                             </option>
@@ -967,7 +1047,7 @@ export default function AiReviewPanel() {
                             {NEEDS_INSTRUCTIONS.includes(selectedType) && (
                                 <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.375rem', padding: '0.75rem', marginBottom: '0.75rem' }}>
                                     <p style={{ fontWeight: 600, fontSize: '0.8rem', marginBottom: '0.5rem' }}>Drafting Instructions</p>
-                                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
                                         Guide the AI with your specific instructions. The more detail you provide, the better the output.
                                     </p>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

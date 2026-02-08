@@ -6,7 +6,7 @@ export default function Disclaimer() {
             role="status"
             aria-label="Legal disclaimer"
             style={{
-                background: 'var(--color-bg-disclaimer)',
+                background: 'var(--disclaimer-bg)',
                 borderBottom: '1px solid #f6e05e',
                 padding: '0.375rem 1rem',
                 fontSize: '0.75rem',

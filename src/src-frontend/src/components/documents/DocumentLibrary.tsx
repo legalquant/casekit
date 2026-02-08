@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import { Link } from 'react-router-dom';
@@ -40,6 +40,10 @@ export default function DocumentLibrary() {
     const [error, setError] = useState<string | null>(null);
     const [editingDocId, setEditingDocId] = useState<string | null>(null);
     const [editText, setEditText] = useState('');
+    const [dragOver, setDragOver] = useState(false);
+    const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
+    const [hasUnsavedText, setHasUnsavedText] = useState(false);
+    const dropRef = useRef<HTMLDivElement>(null);
 
     // Load documents when case changes
     useEffect(() => {
@@ -50,9 +54,76 @@ export default function DocumentLibrary() {
             .catch((e) => { setError(String(e)); setLoading(false); });
     }, [caseName]);
 
+    // Set up Tauri native drag-and-drop listener for file imports
+    useEffect(() => {
+        if (!caseName) return;
+        let unlisten: (() => void) | undefined;
+
+        import('@tauri-apps/api/event').then(({ listen }) => {
+            listen<{ paths: string[] }>('tauri://drag-drop', (event) => {
+                if (event.payload.paths && event.payload.paths.length > 0) {
+                    handleImportFiles(event.payload.paths);
+                }
+            }).then((fn) => { unlisten = fn; });
+        }).catch(() => {
+            // Not in Tauri environment — gracefully ignore
+        });
+
+        return () => { if (unlisten) unlisten(); };
+    }, [caseName, selectedFolder]);
+
     const docCount = documents.length;
     const showWarning = docCount >= DOC_LIMIT_WARN;
     const showStrongWarning = docCount >= DOC_LIMIT_STRONG;
+
+    const handleImportFiles = async (filePaths: string[]) => {
+        setLoading(true);
+        setError(null);
+        setImportProgress({ current: 0, total: filePaths.length });
+
+        for (let i = 0; i < filePaths.length; i++) {
+            const pathStr = filePaths[i];
+            const filename = pathStr.split(/[\\/]/).pop() || 'unknown';
+            setImportProgress({ current: i + 1, total: filePaths.length });
+
+            try {
+                const copyResult = await invoke<{ relative_path: string; extracted: { text: string; metadata_date: string | null; subject: string | null; from: string | null; to: string | null } | null }>('copy_file_to_case', {
+                    caseName,
+                    sourcePath: pathStr,
+                    folder: selectedFolder,
+                    filename,
+                });
+
+                const ext = copyResult.extracted;
+
+                const newDoc: DocumentEntry = {
+                    id: crypto.randomUUID(),
+                    filename,
+                    path: copyResult.relative_path,
+                    folder: selectedFolder,
+                    document_type: 'other',
+                    date: ext?.metadata_date || null,
+                    from: ext?.from || null,
+                    to: ext?.to || null,
+                    description: ext?.subject || '',
+                    tags: [],
+                    extracted_text: ext?.text || null,
+                    added_at: new Date().toISOString(),
+                };
+
+                const updated = await invoke<DocumentEntry[]>('add_document_metadata', {
+                    caseName,
+                    document: newDoc,
+                });
+                setDocuments(updated);
+            } catch (e) {
+                setError(`Failed to import ${filename}: ${e}`);
+            }
+        }
+
+        setLoading(false);
+        setImportProgress(null);
+    };
 
     const handleUpload = async () => {
         try {
@@ -68,52 +139,8 @@ export default function DocumentLibrary() {
             });
 
             if (!result) return;
-
             const filePaths: string[] = Array.isArray(result) ? result : [result];
-            if (filePaths.length === 0) return;
-
-            setLoading(true);
-            setError(null);
-
-            for (const pathStr of filePaths) {
-                const filename = pathStr.split(/[\\/]/).pop() || 'unknown';
-
-                try {
-                    const copyResult = await invoke<{ relative_path: string; extracted: { text: string; metadata_date: string | null; subject: string | null; from: string | null; to: string | null } | null }>('copy_file_to_case', {
-                        caseName,
-                        sourcePath: pathStr,
-                        folder: selectedFolder,
-                        filename,
-                    });
-
-                    const ext = copyResult.extracted;
-
-                    const newDoc: DocumentEntry = {
-                        id: crypto.randomUUID(),
-                        filename,
-                        path: copyResult.relative_path,
-                        folder: selectedFolder,
-                        document_type: 'other',
-                        date: ext?.metadata_date || null,
-                        from: ext?.from || null,
-                        to: ext?.to || null,
-                        description: ext?.subject || '',
-                        tags: [],
-                        extracted_text: ext?.text || null,
-                        added_at: new Date().toISOString(),
-                    };
-
-                    const updated = await invoke<DocumentEntry[]>('add_document_metadata', {
-                        caseName,
-                        document: newDoc,
-                    });
-                    setDocuments(updated);
-                } catch (e) {
-                    setError(`Failed to import ${filename}: ${e}`);
-                }
-            }
-
-            setLoading(false);
+            if (filePaths.length > 0) await handleImportFiles(filePaths);
         } catch (e) {
             setError(`Upload failed: ${e}`);
             setLoading(false);
@@ -135,7 +162,7 @@ export default function DocumentLibrary() {
             <div className="page-header">
                 <h1>Documents</h1>
                 <p>
-                    <strong style={{ color: 'var(--color-primary)' }}>{caseName}</strong>
+                    <strong style={{ color: 'var(--primary)' }}>{caseName}</strong>
                     {' — '}Upload and organise your case documents. Files are stored locally in your
                     <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85em', background: 'var(--bg)', padding: '1px 4px', borderRadius: '3px', marginLeft: '4px' }}>
                         Documents/CaseKit/
@@ -182,37 +209,82 @@ export default function DocumentLibrary() {
             )}
 
             <div className="card" style={{ marginBottom: 'var(--space-4)' }}>
-                <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                    <div>
-                        <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, marginBottom: 'var(--space-1)', color: 'var(--text-muted)' }}>
-                            Destination folder
-                        </label>
-                        <select
-                            value={selectedFolder}
-                            onChange={(e) => setSelectedFolder(e.target.value)}
-                            style={{
-                                padding: 'var(--space-2) var(--space-3)',
-                                borderRadius: 'var(--radius)',
-                                border: '1px solid var(--border)',
-                                fontSize: '0.875rem',
-                                fontFamily: 'var(--font-sans)',
-                                background: 'white',
-                            }}
-                        >
-                            {FOLDERS.map((f) => (
-                                <option key={f.value} value={f.value}>
-                                    {f.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <button className="btn btn-primary" onClick={handleUpload} disabled={loading}>
-                        {loading ? 'Importing…' : 'Add Files'}
-                    </button>
-                    <Link to="/how-to-save-emails" className="btn btn-ghost" style={{ fontSize: '0.8rem' }}>
+                <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center', marginBottom: 'var(--space-3)', flexWrap: 'wrap' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-muted)' }}>
+                        Destination folder:
+                    </label>
+                    <select
+                        value={selectedFolder}
+                        onChange={(e) => setSelectedFolder(e.target.value)}
+                        style={{
+                            padding: 'var(--space-2) var(--space-3)',
+                            borderRadius: 'var(--radius)',
+                            border: '1px solid var(--border)',
+                            fontSize: '0.875rem',
+                            fontFamily: 'var(--font-sans)',
+                            background: 'white',
+                        }}
+                    >
+                        {FOLDERS.map((f) => (
+                            <option key={f.value} value={f.value}>
+                                {f.label}
+                            </option>
+                        ))}
+                    </select>
+                    <Link to="/how-to-save-emails" className="btn btn-ghost" style={{ fontSize: '0.8rem', marginLeft: 'auto' }}>
                         How to save emails
                     </Link>
                 </div>
+
+                <div
+                    ref={dropRef}
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={(e) => {
+                        e.preventDefault();
+                        setDragOver(false);
+                        // Note: In Tauri, browser drag-and-drop does not expose file paths.
+                        // Use the "Browse" button instead, or set up tauri://drag-drop listener.
+                    }}
+                    onClick={handleUpload}
+                    style={{
+                        border: dragOver ? '2px dashed var(--accent)' : '2px dashed var(--border)',
+                        borderRadius: 'var(--radius-lg)',
+                        padding: 'var(--space-8) var(--space-4)',
+                        textAlign: 'center',
+                        background: dragOver ? '#f0fdfa' : 'transparent',
+                        transition: 'all 0.2s',
+                        cursor: 'pointer',
+                    }}
+                >
+                    {loading && importProgress ? (
+                        <div>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--primary)', marginBottom: 'var(--space-2)' }}>
+                                Importing file {importProgress.current} of {importProgress.total}…
+                            </div>
+                            <div style={{
+                                width: '200px', height: '4px', background: 'var(--border)',
+                                borderRadius: '2px', margin: '0 auto',
+                            }}>
+                                <div style={{
+                                    width: `${(importProgress.current / importProgress.total) * 100}%`,
+                                    height: '100%', background: 'var(--accent)', borderRadius: '2px',
+                                    transition: 'width 0.3s ease',
+                                }} />
+                            </div>
+                        </div>
+                    ) : (
+                        <div>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 500, color: dragOver ? 'var(--accent)' : 'var(--text)', marginBottom: 'var(--space-1)' }}>
+                                {dragOver ? 'Drop files here' : 'Drag files here to upload'}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                or click to browse — files will be added to <strong>{FOLDERS.find(f => f.value === selectedFolder)?.label}</strong>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 {error && (
                     <div style={{ marginTop: 'var(--space-2)', color: 'var(--red)', fontSize: '0.85rem' }}>
                         {error}
@@ -288,22 +360,41 @@ export default function DocumentLibrary() {
                                             marginBottom: 'var(--space-1)',
                                         }}
                                     >
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between',
-                                                cursor: 'pointer',
-                                            }}
-                                            onClick={() => {
+                        <div
+                                        role="button"
+                                        tabIndex={0}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            cursor: 'pointer',
+                                        }}
+                                        onClick={() => {
+                                            if (editingDocId === doc.id) {
+                                                if (hasUnsavedText && !window.confirm('You have unsaved text changes. Discard them?')) return;
+                                                setEditingDocId(null);
+                                                setHasUnsavedText(false);
+                                            } else {
+                                                if (hasUnsavedText && editingDocId && !window.confirm('You have unsaved text changes. Discard them?')) return;
+                                                setEditingDocId(doc.id);
+                                                setEditText(doc.extracted_text || '');
+                                                setHasUnsavedText(false);
+                                            }
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
                                                 if (editingDocId === doc.id) {
                                                     setEditingDocId(null);
+                                                    setHasUnsavedText(false);
                                                 } else {
                                                     setEditingDocId(doc.id);
                                                     setEditText(doc.extracted_text || '');
+                                                    setHasUnsavedText(false);
                                                 }
-                                            }}
-                                        >
+                                            }
+                                        }}
+                                    >
                                             <div>
                                                 <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>{doc.filename}</div>
                                                 {doc.description && (
@@ -364,7 +455,7 @@ export default function DocumentLibrary() {
                                                 </label>
                                                 <textarea
                                                     value={editText}
-                                                    onChange={(e) => setEditText(e.target.value)}
+                                                    onChange={(e) => { setEditText(e.target.value); setHasUnsavedText(true); }}
                                                     rows={8}
                                                     style={{
                                                         width: '100%',
@@ -391,6 +482,7 @@ export default function DocumentLibrary() {
                                                                 });
                                                                 setDocuments(updated);
                                                                 setEditingDocId(null);
+                                                                setHasUnsavedText(false);
                                                             } catch (e) {
                                                                 setError(`Failed to save: ${e}`);
                                                             }

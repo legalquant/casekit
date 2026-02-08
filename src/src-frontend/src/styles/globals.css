@@ -88,7 +88,7 @@
 }
 
 html {
-  font-size: 13px;
+  font-size: 15px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -292,7 +292,7 @@ a:hover {
 /* ── Page container ───────────────────── */
 
 .page {
-  max-width: 56rem;
+  max-width: 72rem;
   margin: 0 auto;
   padding: var(--space-6) var(--space-8);
 }
@@ -417,7 +417,7 @@ a:hover {
 .hero {
   text-align: center;
   padding: var(--space-10) var(--space-6);
-  max-width: 40rem;
+  max-width: 52rem;
   margin: 0 auto var(--space-8);
 }
 

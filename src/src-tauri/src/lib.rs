@@ -7,7 +7,7 @@ pub mod ocr;
 
 use commands::case::{create_case, list_cases, load_case, update_case, delete_case};
 use commands::documents::{add_document_metadata, copy_file_to_case, list_case_files, load_documents_index, remove_document_metadata, read_file_text, extract_text_from_path};
-use commands::chronology::{build_chronology, add_chronology_entry, remove_chronology_entry, scan_documents_for_dates};
+use commands::chronology::{build_chronology, add_chronology_entry, remove_chronology_entry, update_chronology_entry, scan_documents_for_dates};
 use commands::export::export_bundle;
 use commands::filesystem::{get_base_path, ensure_base_directory};
 use commands::system::check_dependencies;
@@ -41,6 +41,7 @@ pub fn run() {
             build_chronology,
             add_chronology_entry,
             remove_chronology_entry,
+            update_chronology_entry,
             scan_documents_for_dates,
             export_bundle,
             check_dependencies,
