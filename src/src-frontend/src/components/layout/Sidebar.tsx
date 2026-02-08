@@ -92,23 +92,26 @@ export default function Sidebar() {
             {/* Brand */}
             <div
                 style={{
-                    padding: '20px 20px 16px',
+                    padding: '24px 20px 20px',
                     borderBottom: '1px solid rgba(255,255,255,0.06)',
                 }}
             >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="2" y="3" width="20" height="18" rx="2" stroke="#14b8a6" strokeWidth="1.5" />
-                        <path d="M7 8h10M7 12h6M7 16h8" stroke="#14b8a6" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <img
+                        src="/casekit-logo.svg"
+                        alt="CaseKit"
+                        width={44}
+                        height={44}
+                        style={{ borderRadius: '10px', flexShrink: 0 }}
+                    />
                     <div>
-                        <div style={{ fontSize: '1rem', fontWeight: 700, color: '#f8fafc', letterSpacing: '-0.02em' }}>
+                        <div style={{ fontSize: '1.35rem', fontWeight: 700, color: '#f8fafc', letterSpacing: '-0.02em' }}>
                             CaseKit
                         </div>
+                        <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '2px', lineHeight: 1.3 }}>
+                            Organise, understand, resolve
+                        </div>
                     </div>
-                </div>
-                <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '4px', lineHeight: 1.4 }}>
-                    Organise, understand, resolve
                 </div>
             </div>
 
@@ -212,7 +215,18 @@ export default function Sidebar() {
                     lineHeight: 1.5,
                 }}
             >
-                Not legal advice. For information only.
+                <div>Not legal advice. For information only.</div>
+                <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>Built by</span>
+                    <a
+                        href="https://github.com/legalquant"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: '#14b8a6', textDecoration: 'none' }}
+                    >
+                        AnonLQ
+                    </a>
+                </div>
             </div>
         </aside>
     );

@@ -1,0 +1,18 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="64" fill="#0f172a"/>
+  
+  <!-- Shield shape (privacy) -->
+  <path d="M256 80 L380 136 L380 288 C380 360 326 412 256 440 C186 412 132 360 132 288 L132 136 Z" 
+        fill="none" stroke="#14b8a6" stroke-width="7"/>
+  
+  <!-- Anonymous figure - head -->
+  <circle cx="256" cy="200" r="36" fill="none" stroke="#14b8a6" stroke-width="6"/>
+  
+  <!-- Anonymous figure - body -->
+  <path d="M200 310 C200 270 220 250 256 250 C292 250 312 270 312 310" 
+        fill="none" stroke="#14b8a6" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Text: AnonLQ -->
+  <text x="256" y="478" text-anchor="middle" font-family="'SF Mono', 'Fira Code', 'Consolas', monospace" font-size="58" font-weight="600" fill="#14b8a6" letter-spacing="3">AnonLQ</text>
+</svg>
