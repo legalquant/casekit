@@ -155,6 +155,24 @@ export default function YourDataAndAi() {
                 </p>
             </div>
 
+            <div className="info-block" style={{ borderColor: 'var(--accent)', borderLeftWidth: '3px' }}>
+                <h3>Citation verification — what it sends</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 'var(--space-2)' }}>
+                    The Citation Audit tool checks whether legal citations in your documents refer to real cases.
+                    When you verify a citation, CaseKit sends <strong>only the citation string itself</strong> (e.g.
+                    "[2020] UKSC 42" or "Smith v Jones") to BAILII and the National Archives (Find Case Law).
+                </p>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 'var(--space-2)' }}>
+                    <strong>No client data, document content, case details, or personal information is included in these requests.</strong> The
+                    request is equivalent to typing a case name into the BAILII search box — it contains nothing more
+                    than the citation reference.
+                </p>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                    This is the only network activity that does not involve an AI provider. It does not require
+                    an API key and has no cost.
+                </p>
+            </div>
+
             <div className="info-block">
                 <h3>Why we built it this way</h3>
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>

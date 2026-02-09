@@ -35,12 +35,12 @@ export default function TechnicalOverview() {
             <div className="info-block">
                 <h3>Network activity</h3>
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 'var(--space-3)' }}>
-                    CaseKit makes <strong>zero network requests</strong> by default. The only exception is if you
-                    opt in to AI features:
+                    CaseKit makes <strong>zero network requests</strong> by default. There are two user-initiated exceptions:
                 </p>
                 <ul>
-                    <li><strong>Without AI</strong> — the app never contacts any server. It works fully offline.</li>
-                    <li><strong>With AI</strong> — when you initiate an AI analysis, the text you approve is sent directly from your machine to <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85em', background: 'var(--bg)', padding: '1px 4px', borderRadius: '3px' }}>api.anthropic.com</code> using your API key. No data passes through any CaseKit server.</li>
+                    <li><strong>Without AI or citation checks</strong> — the app never contacts any server. It works fully offline.</li>
+                    <li><strong>With AI</strong> — when you initiate an AI analysis, the text you approve is sent directly from your machine to your chosen provider (<code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85em', background: 'var(--bg)', padding: '1px 4px', borderRadius: '3px' }}>api.anthropic.com</code>, <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85em', background: 'var(--bg)', padding: '1px 4px', borderRadius: '3px' }}>api.openai.com</code>, or <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85em', background: 'var(--bg)', padding: '1px 4px', borderRadius: '3px' }}>generativelanguage.googleapis.com</code>) using your API key. No data passes through any CaseKit server.</li>
+                    <li><strong>Citation verification</strong> — when you verify legal citations, only the citation string (e.g. "[2020] UKSC 42") is sent to BAILII and the National Archives. No client data, document content, or case details are included in these requests.</li>
                     <li><strong>No telemetry</strong> — there is no analytics, crash reporting, usage tracking, or phone-home functionality of any kind.</li>
                     <li><strong>No auto-update</strong> — the app does not check for updates automatically. You download new versions manually.</li>
                 </ul>
@@ -107,13 +107,13 @@ export default function TechnicalOverview() {
             <div className="info-block" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '0.5rem', padding: '1rem 1.25rem' }}>
                 <h3 style={{ color: '#166534' }}>Verify it yourself</h3>
                 <p style={{ fontSize: '0.875rem', marginBottom: 'var(--space-2)' }}>
-                    CaseKit makes <strong>zero network requests</strong> unless you explicitly use AI features.
-                    You don't have to take our word for it — you can verify:
+                    CaseKit makes <strong>zero network requests</strong> unless you explicitly use AI features
+                    or citation verification. You don't have to take our word for it — you can verify:
                 </p>
                 <ul>
                     <li>Open <strong>Task Manager</strong> (Ctrl+Shift+Esc) → click the <strong>Network</strong> column to sort by usage</li>
                     <li>CaseKit will show <strong>0 Mbps</strong> network activity during normal use</li>
-                    <li>Only when you press "Analyse" on an AI feature will you see a brief data transfer to <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85em', background: 'var(--bg)', padding: '1px 4px', borderRadius: '3px' }}>api.anthropic.com</code></li>
+                    <li>Only when you press "Analyse" or "Verify" will you see brief data transfers to the AI provider or BAILII/National Archives</li>
                     <li>There is no background connectivity, no update checker, no telemetry endpoint</li>
                 </ul>
             </div>

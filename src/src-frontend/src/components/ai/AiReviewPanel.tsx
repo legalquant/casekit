@@ -647,8 +647,9 @@ export default function AiReviewPanel() {
                         Set up API Key
                     </Link>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.75rem' }}>
-                        CaseKit has no internet connection by default. AI features are the only thing that sends data,
-                        and only when you explicitly press "Analyse".
+                        CaseKit has no internet connection by default. AI features send data only when you
+                        explicitly press "Analyse". Citation verification sends only citation strings to
+                        BAILII/National Archives — never client data.
                     </p>
                 </div>
             ) : !currentCase ? (
@@ -1185,7 +1186,8 @@ export default function AiReviewPanel() {
                         <div>
                             <strong>Privacy:</strong> Before any AI call, you will see exactly what information will be sent.
                             No data is transmitted without your explicit confirmation.
-                            CaseKit has <strong>no internet connection</strong> outside of these explicit AI calls.
+                            CaseKit has <strong>no internet connection</strong> outside of explicit AI calls and
+                            citation verification (which sends only citation strings, never client data).
                         </div>
                     </div>
                 </div>

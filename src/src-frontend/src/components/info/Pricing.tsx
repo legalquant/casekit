@@ -226,12 +226,14 @@ export default function Pricing() {
             </div>
 
             <div className="info-block" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '0.5rem', padding: '1rem 1.25rem' }}>
-                <h3 style={{ color: '#166534' }}>CaseKit is completely offline</h3>
+                <h3 style={{ color: '#166534' }}>CaseKit works offline by default</h3>
                 <p style={{ fontSize: '0.875rem' }}>
                     CaseKit has <strong>no internet connection</strong> by default. It does not phone home,
-                    check for updates, or send analytics. The only network activity  is when you explicitly
-                    use an AI feature — and even then, data goes directly to the provider you chose. Nothing passes
-                    through any CaseKit server.
+                    check for updates, or send analytics. There are two exceptions, both user-initiated:
+                    AI features send approved text directly to the provider you chose, and citation
+                    verification sends only the citation string (e.g. "[2020] UKSC 42") to BAILII and
+                    the National Archives to check it resolves — no client data is included.
+                    Nothing passes through any CaseKit server.
                 </p>
             </div>
 

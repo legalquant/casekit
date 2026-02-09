@@ -127,9 +127,11 @@ export default function LandingPage() {
             }}>
 
                 <div>
-                    <strong>CaseKit works completely offline.</strong> It has no internet connection, no account, no analytics.
-                    Your data stays on your computer and is never sent anywhere.
-                    The only exception: optional AI analysis sends approved text directly to the AI provider.{' '}
+                    <strong>CaseKit works offline by default.</strong> No account, no analytics, no background connectivity.
+                    Your data stays on your computer. The only exceptions: optional AI analysis sends
+                    approved text directly to the AI provider, and citation verification sends only the
+                    citation string (e.g. "[2020] UKSC 42") to BAILII and the National Archives — never
+                    any client data.{' '}
                     <Link to="/your-data" style={{ color: '#166534', fontWeight: 500 }}>Learn more</Link>
                 </div>
             </div>

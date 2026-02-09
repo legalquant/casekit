@@ -74,15 +74,17 @@ export default function ReadThisFirst() {
             </div>
 
             <div className="info-block" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '0.5rem', padding: '1rem 1.25rem' }}>
-                <h3 style={{ color: '#166534' }}>CaseKit works completely offline</h3>
+                <h3 style={{ color: '#166534' }}>CaseKit works offline by default</h3>
                 <p style={{ fontSize: '0.875rem', marginBottom: 'var(--space-2)' }}>
-                    CaseKit has <strong>no connection to the internet</strong>. It cannot send data anywhere, phone home,
+                    CaseKit has <strong>no connection to the internet</strong> by default. It does not phone home,
                     check for updates, or communicate with any server. There is no account, no login, no analytics.
                 </p>
                 <p style={{ fontSize: '0.875rem' }}>
-                    The <strong>only exception</strong> is if you choose to use the optional AI analysis features. In that case,
-                    and only when you explicitly press "Analyse", the text you approve is sent directly to the AI provider
-                    (e.g. Anthropic). Nothing else leaves your machine — ever.
+                    There are <strong>two exceptions</strong>, both user-initiated: (1) optional AI analysis features — when
+                    you explicitly press "Analyse", the text you approve is sent directly to the AI provider
+                    (e.g. Anthropic, OpenAI, or Google); and (2) citation verification, which sends only the
+                    citation string (e.g. "[2020] UKSC 42") to BAILII and the National Archives to check whether
+                    the case exists — no client data is ever included in these requests.
                 </p>
             </div>
 

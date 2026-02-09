@@ -312,8 +312,10 @@ export default function ApiKeySetup() {
 
                         <div>
                             <strong>CaseKit has no internet connection by default.</strong> Your API key is only used
-                            when you explicitly press "Analyse" on an AI feature. At all other times, CaseKit makes
-                            zero network requests. There is no background connectivity, no analytics, and no data collection.
+                            when you explicitly press "Analyse" on an AI feature. The only other network
+                            activity is citation verification, which sends only citation strings (e.g. "[2020] UKSC 42")
+                            to BAILII and the National Archives — never any client data.
+                            There is no background connectivity, no analytics, and no data collection.
                         </div>
                     </div>
                 </div>
